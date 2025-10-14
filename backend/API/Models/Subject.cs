@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace API.Models
 {
@@ -9,6 +10,7 @@ namespace API.Models
         [Required]
         public required string Name { get; set; }
         [Required]
+        [JsonIgnore]
         public List<User> Teachers { get; set; } = new List<User>();
     }
 }

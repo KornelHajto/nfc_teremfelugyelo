@@ -27,5 +27,6 @@ namespace API.Models
         public List<RememberMe> RememberMe { get; set; } = new List<RememberMe>();
         public List<Key> Keys { get; set; } = new List<Key>();
         public List<Course> Courses { get; set; } = new List<Course>();
+        public List<Subject> Teaches { get; set; } = new List<Subject>();
     }
 }

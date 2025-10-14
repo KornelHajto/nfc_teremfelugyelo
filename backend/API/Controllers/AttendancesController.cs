@@ -63,5 +63,36 @@ namespace API.Controllers
 
         }
 
+        [Authorize]
+        [HttpGet("teacher/getall")]
+        public async Task<IActionResult> GetAllAttendancesOfTeacher()
+        {
+            if (!ModelState.IsValid) { return BadRequest(new { message = "InvalidForm" }); }
+            var neptunId = User.FindFirst(ClaimTypes.Name)?.Value;
+            if (string.IsNullOrEmpty(neptunId))
+                return BadRequest(new { message = "NoId" });
+
+            User? teacher = await _context.Users
+                .Include(u => u.Courses)
+                .FirstOrDefaultAsync(u => u.NeptunId == neptunId);
+            if (teacher == null)
+                return Unauthorized(new { message = "NoUserFound" });
+            if (teacher.AdminLevel == AdminLevels.Student)
+                return Unauthorized(new { message = "NotAuthorized" });
+
+            var subjectIds = await _context.Subjects
+                .Where(s => s.Teachers.Any(t => t.NeptunId == neptunId))
+                .Select(s => s.Id)
+                .ToListAsync();
+
+            var attendances = await _context.Attendances
+                .Include(a => a.User)
+                .Include(a => a.Subject)
+                .Where(a => subjectIds.Contains(a.Subject.Id))
+                .ToListAsync();
+
+            return Ok(new { message = "Authorized", attendances });
+        }
+
     }
 }

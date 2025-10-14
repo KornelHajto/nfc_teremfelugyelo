@@ -25,6 +25,10 @@ namespace API.Data
                 .HasMany(c => c.Students)
                 .WithMany(u => u.Courses)
                 .UsingEntity(j => j.ToTable("CourseStudents"));
+            modelBuilder.Entity<Subject>()
+                .HasMany(c => c.Teachers)
+                .WithMany(u => u.Teaches)
+                .UsingEntity(j => j.ToTable("SubjectTeachers"));
         }
     }
 }

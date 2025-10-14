@@ -49,7 +49,7 @@ namespace API.Controllers
             if (classroom == null) { return NotFound(new { message = "ClassroomNotFound" }); }
             Course newCourse = new()
             {
-                Name = subject.Name,
+                Name = course.Name,
                 Subject = subject,
                 Classroom = classroom,
                 Duration = course.Duration
