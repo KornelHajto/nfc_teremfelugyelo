@@ -17,11 +17,10 @@ namespace API.Models
         [Required]
         public required string Password { get; set; }
         [Required]
-        public required AdminLevels AdminLevel { get; set; } = 0;
+        public AdminLevels AdminLevel { get; set; } = 0;
 
-        public RememberMe? RememberMe { get; set; }
-        public DigitalPass? DigitalKey { get; set; }
-        public PhysicalPass? PhysicalKey { get; set; }
+        public List<RememberMe> RememberMe { get; set; } = new List<RememberMe>();
+        public List<Key> Keys { get; set; } = new List<Key>();
 
     }
 }

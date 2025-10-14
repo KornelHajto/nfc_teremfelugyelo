@@ -9,10 +9,9 @@ namespace API.Data
         public DbSet<Attendance> Attendances { get; set; }
         public DbSet<Classroom> Classrooms { get; set; }
         public DbSet<Course> Courses { get; set; }
-        public DbSet<DigitalPass> DigitalPass { get; set; }
         public DbSet<Exam> Exams { get; set; }
         public DbSet<Log> Logs { get; set; }
-        public DbSet<PhysicalPass> PhysicalPass { get; set; }
+        public DbSet<Key> Passes { get; set; }
         public DbSet<RememberMe> RememberMe { get; set; }
         public DbSet<Subject> Subjects { get; set; }
 

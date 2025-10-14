@@ -4,7 +4,7 @@ namespace API.Models
 {
     public class RememberMe
     {
-        [Required]
+        [Key]
         public required string RememberHash { get; set; }
     }
 }
