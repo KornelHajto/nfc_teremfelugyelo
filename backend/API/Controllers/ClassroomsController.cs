@@ -69,5 +69,26 @@ namespace API.Controllers
 
             return Ok(new { message = "ClassroomDeleted" });
         }
+
+        [Authorize]
+        [HttpGet("getall")]
+        public async Task<IActionResult> GetAllClassrooms()
+        {
+            if (!ModelState.IsValid) { return BadRequest(new { message = "InvalidForm" }); }
+            var neptunId = User.FindFirst(ClaimTypes.Name)?.Value;
+            if (string.IsNullOrEmpty(neptunId))
+                return BadRequest(new { message = "NoId" });
+
+            User? user = await _context.Users
+                .FirstOrDefaultAsync(u => u.NeptunId == neptunId);
+            if (user == null)
+                return Unauthorized(new { message = "NoUserFound" });
+            if (user.AdminLevel == AdminLevels.Student)
+                return Unauthorized(new { message = "NotAuthorized" });
+            List<Classroom> rooms = await _context.Classrooms.ToListAsync();
+
+            return Ok(new { message = "Authorized", classrooms = rooms });
+
+        }
     }
 }
