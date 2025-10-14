@@ -3,6 +3,6 @@
     public class AddNewKeycardDTO
     {
         public required string AdminKeycard { get; set; }
-        public string NeptunId { get; set; }
+        public required string NeptunId { get; set; }
     }
 }

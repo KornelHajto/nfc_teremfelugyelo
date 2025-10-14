@@ -38,7 +38,7 @@ namespace API.Controllers
                 return Conflict(new { message = "PasswordWrongChars" });
             }
 
-            bool TakenAccount = _context.Users.Any(u => u.NeptunId == u.NeptunId);
+            bool TakenAccount = _context.Users.Any(u => u.NeptunId == UserForm.NeptunId);
             if (TakenAccount) {
                 return Conflict(new { message = "TakenNeptunId" });
             }
