@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using API.Data;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
@@ -7,6 +8,13 @@ namespace API.Controllers
     [ApiController]
     public class AttendancesController : ControllerBase
     {
+        private readonly AppDbContext _context;
+        public AttendancesController(AppDbContext context)
+        {
+            _context = context;
+        }
+
+
 
     }
 }

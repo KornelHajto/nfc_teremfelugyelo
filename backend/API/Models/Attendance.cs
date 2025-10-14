@@ -6,6 +6,7 @@ namespace API.Models
     {
         Arrived,
         Late,
+        ExitBeforeEnd,
         AbsenceWithExcuse,
         AbsenceWithoutExcuse
     }

@@ -14,8 +14,9 @@ namespace API.Models
         [Required]
         public required Classroom Classroom { get; set; }
 
-        public List<DateTime>? Date { get; set; } = new List<DateTime>();
-        public TimeSpan? Duration { get; set; }
+        public List<DateTime> Date { get; set; } = new List<DateTime>();
+        [Required]
+        public required TimeSpan Duration { get; set; }
         [JsonIgnore]
         public List<User> Students { get; set; } = new List<User>();
     }

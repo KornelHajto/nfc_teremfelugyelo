@@ -51,7 +51,8 @@ namespace API.Controllers
             {
                 Name = subject.Name,
                 Subject = subject,
-                Classroom = classroom
+                Classroom = classroom,
+                Duration = course.Duration
             };
             await _context.Courses.AddAsync(newCourse);
             await _context.SaveChangesAsync();
@@ -84,6 +85,38 @@ namespace API.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "CourseDeleted" });
+        }
+
+        [Authorize]
+        [HttpPost("dates")]
+        public async Task<IActionResult> AddCourseDates([FromBody] AddCourseDatesDTO course)
+        {
+            if (!ModelState.IsValid) { return BadRequest(new { message = "InvalidForm" }); }
+            var neptunId = User.FindFirst(ClaimTypes.Name)?.Value;
+            if (string.IsNullOrEmpty(neptunId))
+                return BadRequest(new { message = "NoId" });
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.NeptunId == neptunId);
+            if (user == null)
+                return Unauthorized(new { message = "NoUserFound" });
+
+            if (user.AdminLevel == AdminLevels.Student)
+                return Unauthorized(new { message = "NoPermission" });
+            Course? courseToUpdate = await _context.Courses.FirstOrDefaultAsync(c => c.Id == course.Id);
+            if (courseToUpdate == null)
+            {
+                return NotFound(new { message = "CourseNotFound" });
+            }
+            DateTime startDate = course.StartDate;
+            DateTime endDate = course.EndDate;
+            while (startDate <= endDate)
+            {
+                courseToUpdate.Date.Add(startDate);
+                startDate = startDate.AddDays(7);
+            }
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "CourseDatesAdded" });
         }
 
         [Authorize]
