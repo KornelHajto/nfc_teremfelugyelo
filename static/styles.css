@@ -1,0 +1,120 @@
+:root{
+  --bg: #0f1720;
+  --card: #0b1220;
+  --muted: #9aa6b2;
+  --accent: #00b0ff;
+  --accent-2: #4fc3f7;
+}
+
+body{
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  background: linear-gradient(180deg,#071020 0%, #071827 100%);
+  color: #e6eef6;
+  margin: 0;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.container{
+  width:820px;
+  max-width:96%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border-radius:14px;
+  padding:18px 22px;
+  box-shadow: 0 10px 40px rgba(2,8,23,0.7);
+}
+
+h1{ margin:6px 0 14px 0; font-weight:600; }
+
+.controls{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.buttons{ display:flex; gap:8px; align-items:center }
+button{ font-size:20px; padding:14px 20px; border-radius:12px; border:0; cursor:pointer; color:var(--bg); touch-action:manipulation }
+button.primary{ background:linear-gradient(90deg,var(--accent-2), var(--accent)); color:#022; font-weight:800; box-shadow: 0 8px 18px rgba(2,136,209,0.18) }
+button.muted{ background:transparent; color:var(--muted); border:1px solid rgba(255,255,255,0.04); padding:12px 14px }
+button:disabled{ opacity:0.45; cursor:not-allowed }
+
+.status{ min-width:160px; text-align:right; color:var(--muted); }
+
+.nfc-wrap{ margin-top:18px; display:flex; align-items:center; gap:16px; }
+.nfc-wrap{ gap:18px }
+#nfc-icon{ width:120px; height:120px; opacity:0.15; transition:opacity 200ms; }
+.nfc-text{ font-weight:800; font-size:18px }
+
+/* Icon specific */
+#nfc-icon .nfc-visual{ position:relative; width:100%; height:100%; display:flex; align-items:center; justify-content:center }
+
+/* rings created with CSS */
+#nfc-icon .ring{ position:absolute; border-radius:50%; box-sizing:border-box; }
+#nfc-icon .ring-3{ width:84%; height:84%; border:3px solid rgba(79,195,247,0.95); }
+#nfc-icon .ring-2{ width:60%; height:60%; border:3px solid rgba(102,211,255,0.95); }
+#nfc-icon .ring-1{ width:36%; height:36%; border:3px solid rgba(157,232,255,0.95); }
+#nfc-icon.pulse .ring{ animation: ringPulse 1.1s ease-in-out infinite }
+@keyframes ringPulse{ 0%{ transform: scale(1); opacity:0.95 } 50%{ transform: scale(1.02); opacity:1 } 100%{ transform: scale(1); opacity:0.95 } }
+
+/* card */
+#nfc-icon .card{ width:28%; height:22%; background:#e9fbff; border:2px solid #00b0ff; border-radius:6px; position:relative; z-index:2 }
+
+/* check overlay */
+#nfc-icon .check{ position:absolute; font-size:44px; font-weight:900; color:#004d40; z-index:3; opacity:0; transform:scale(0.6); transition:transform .18s ease, opacity .18s ease }
+#nfc-icon.success .check{ opacity:1; transform:scale(1.05) }
+
+/* error state */
+#nfc-icon.error .ring-3{ border-color:#ff8a80 }
+#nfc-icon.error .ring-2{ border-color:#ff9e80 }
+#nfc-icon.error .ring-1{ border-color:#ffc0a3 }
+
+/* larger check for tablets */
+@media (max-width:1280px){
+  #nfc-icon .check{ font-size:72px }
+}
+
+.nfc-sub{ font-size:13px; color:var(--muted) }
+
+.panels{ display:flex; gap:12px; margin-top:18px }
+.panel{ flex:1; background: rgba(255,255,255,0.02); border-radius:10px; padding:12px }
+.panel h3{ margin:0 0 8px 0; font-size:14px }
+pre{ white-space:pre-wrap; max-height:320px; overflow:auto; background:transparent; color:var(--muted); margin:0 }
+
+/* Pulse animation styling */
+@keyframes nfc-pulse { 0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(79,195,247,0.0)); } 50% { transform: scale(1.08); filter: drop-shadow(0 8px 20px rgba(79,195,247,0.22)); } 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(79,195,247,0.0)); } }
+#nfc-icon.pulse svg { animation: nfc-pulse 1s ease-in-out infinite; }
+
+/* success / toast */
+.toast{ position:fixed; left:50%; transform:translateX(-50%); bottom:36px; background:linear-gradient(90deg,#00e676,#00b0ff); color:#022; padding:14px 24px; border-radius:28px; box-shadow:0 12px 40px rgba(2,8,23,0.6); opacity:0; pointer-events:none; transition:opacity .18s ease, transform .18s ease }
+.toast.show{ opacity:1; pointer-events:auto; transform:translateX(-50%) translateY(-6px) }
+.toast.big{ font-size:20px; padding:18px 28px }
+.toast.error{ background: linear-gradient(90deg,#ff6b6b,#ff3d00); color:#ffffff }
+.success svg { filter: drop-shadow(0 12px 30px rgba(0,176,255,0.28)); }
+.error svg { filter: drop-shadow(0 12px 30px rgba(255,80,80,0.28)); }
+.panel.highlight{ box-shadow: 0 8px 28px rgba(0,176,255,0.12); border:1px solid rgba(0,176,255,0.12) }
+.panel.error-highlight{ box-shadow: 0 8px 28px rgba(255,80,80,0.12); border:1px solid rgba(255,80,80,0.12) }
+
+/* small screens */
+/* Bigger layout for tablets and small laptops */
+@media (max-width:1280px){
+  .container{
+    width:100%;
+    height:100vh;
+    border-radius:0;
+    padding:22px 20px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+  }
+  .panels{ flex-direction:column; gap:16px }
+  .status{ text-align:left; font-size:18px }
+  #nfc-icon{ width:260px; height:260px }
+  /* Keep buttons large but not stretched full-width on tablets */
+  button{ width:auto; min-width:220px; max-width:360px; padding:18px; font-size:22px; border-radius:12px }
+  .buttons{ flex-direction:row; flex-wrap:wrap; justify-content:center; gap:14px }
+  .controls{ flex-direction:column; align-items:center; gap:16px }
+  .nfc-text{ font-size:24px }
+  pre{ font-size:16px }
+}
+
+/* scale-large override (user toggled) - keep things bigger */
+.scale-large #nfc-icon{ width:300px; height:300px }
+.scale-large button{ font-size:26px; padding:20px }
+.scale-large .nfc-text{ font-size:26px }
