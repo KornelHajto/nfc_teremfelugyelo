@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 using System.Security.Claims;
 
 namespace API.Controllers
@@ -94,11 +95,41 @@ namespace API.Controllers
             if (string.IsNullOrEmpty(neptunId))
                 return BadRequest(new { message = "NoId" });
 
-            User? user = await _context.Users.FirstOrDefaultAsync(u => u.NeptunId == neptunId);
+            User? user = await _context.Users
+                .Include(u => u.Courses)
+                .FirstOrDefaultAsync(u => u.NeptunId == neptunId);
             if (user == null)
                 return Unauthorized(new { message = "NoUserFound" });
 
-            return Ok(new { message = "Authorized", user.Courses });
+            return Ok(new { message = "Authorized", courses = user.Courses });
+        }
+
+        [Authorize]
+        [HttpPost("user/add")]
+        public async Task<IActionResult> UserAddCourse([FromBody] AddCourseDTO courseDto)
+        {
+            if (!ModelState.IsValid) { return BadRequest(new { message = "InvalidForm" }); }
+            var neptunId = User.FindFirst(ClaimTypes.Name)?.Value;
+            if (string.IsNullOrEmpty(neptunId))
+                return BadRequest(new { message = "NoId" });
+            
+            User? admin = await _context.Users.FirstOrDefaultAsync(u => u.NeptunId == neptunId);
+            if (admin == null)
+                return Unauthorized(new { message = "NoTeacherFound" });
+            if (admin.AdminLevel == AdminLevels.Student)
+                return Unauthorized(new { message = "NotAuthorized" });
+            User? student = await _context.Users.FirstOrDefaultAsync(u => u.NeptunId == courseDto.NeptunId);
+            if (student == null)
+                return Unauthorized(new { message = "NoStudentFound" });
+
+            Course? course = await _context.Courses.FirstOrDefaultAsync(c => c.Id == courseDto.Id);
+            if (course == null)
+                return NotFound(new { message = "CourseNotFound" });
+
+            student.Courses.Add(course);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "CourseAddedToUser" });
         }
     }
 }

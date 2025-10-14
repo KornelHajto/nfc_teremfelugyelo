@@ -4,6 +4,7 @@ using API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251014194610_FixRequireds")]
+    partial class FixRequireds
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -247,6 +250,9 @@ namespace API.Migrations
                     b.Property<string>("ClassroomRoomId")
                         .HasColumnType("varchar(255)");
 
+                    b.Property<int?>("CourseId")
+                        .HasColumnType("int");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -266,24 +272,11 @@ namespace API.Migrations
 
                     b.HasIndex("ClassroomRoomId");
 
+                    b.HasIndex("CourseId");
+
                     b.HasIndex("SubjectId");
 
                     b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("CourseUser", b =>
-                {
-                    b.Property<int>("CoursesId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("StudentsNeptunId")
-                        .HasColumnType("varchar(255)");
-
-                    b.HasKey("CoursesId", "StudentsNeptunId");
-
-                    b.HasIndex("StudentsNeptunId");
-
-                    b.ToTable("CourseStudents", (string)null);
                 });
 
             modelBuilder.Entity("API.Models.Attendance", b =>
@@ -396,29 +389,23 @@ namespace API.Migrations
                         .WithMany("InRoom")
                         .HasForeignKey("ClassroomRoomId");
 
+                    b.HasOne("API.Models.Course", null)
+                        .WithMany("Students")
+                        .HasForeignKey("CourseId");
+
                     b.HasOne("API.Models.Subject", null)
                         .WithMany("Teachers")
                         .HasForeignKey("SubjectId");
                 });
 
-            modelBuilder.Entity("CourseUser", b =>
-                {
-                    b.HasOne("API.Models.Course", null)
-                        .WithMany()
-                        .HasForeignKey("CoursesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("API.Models.User", null)
-                        .WithMany()
-                        .HasForeignKey("StudentsNeptunId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("API.Models.Classroom", b =>
                 {
                     b.Navigation("InRoom");
+                });
+
+            modelBuilder.Entity("API.Models.Course", b =>
+                {
+                    b.Navigation("Students");
                 });
 
             modelBuilder.Entity("API.Models.Subject", b =>

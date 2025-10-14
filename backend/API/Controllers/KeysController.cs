@@ -45,7 +45,14 @@ namespace API.Controllers
             room.InRoom.Add(user);
 
             string newId = await ReplaceUID(key);
-
+            Log log = new()
+            {
+                Date = DateTime.Now,
+                User = user,
+                Classroom = room,
+                EnterType = EnterTypes.Enter
+            };
+            await _context.Logs.AddAsync(log);
             await _context.SaveChangesAsync();
             if (user.AdminLevel == AdminLevels.Admin) {
                 return Ok(new { message = "AuthorizedAsAdmin", newUID = newId });
@@ -78,6 +85,22 @@ namespace API.Controllers
             .FirstOrDefaultAsync(u => u.Keys.Any(k => k.Hash == Keycard.Hash));
             if (user == null) { return Unauthorized(new { message = "KeycardNotFound" }); }
             string newId = await ReplaceUID(key);
+            Classroom? room = await _context.Classrooms
+                .Include(c => c.InRoom)
+                .FirstOrDefaultAsync(c => c.InRoom.Any(u => u.NeptunId == user.NeptunId));
+            if (room != null)
+            {
+                room.InRoom.RemoveAll(u => u.NeptunId == user.NeptunId);
+                await _context.SaveChangesAsync();
+            }
+            Log log = new()
+            {
+                Date = DateTime.Now,
+                User = user,
+                Classroom = room,
+                EnterType = EnterTypes.Exit
+            };
+            await _context.Logs.AddAsync(log);
 
             if (user.AdminLevel == AdminLevels.Admin)
             {

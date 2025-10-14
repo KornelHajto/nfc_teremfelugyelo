@@ -21,12 +21,11 @@ namespace API.Models
         [Required]
         public AdminLevels AdminLevel { get; set; } = 0;
         [Required]
-        public byte[]? Picture { get; set; }
+        public required byte[] Picture { get; set; }
 
 
         public List<RememberMe> RememberMe { get; set; } = new List<RememberMe>();
         public List<Key> Keys { get; set; } = new List<Key>();
         public List<Course> Courses { get; set; } = new List<Course>();
-
     }
 }

@@ -52,6 +52,7 @@ namespace API.Controllers
                 NeptunId = UserForm.NeptunId.ToUpper(),
                 FullName = UserForm.FullName,
                 Password = PasswordHash,
+                Picture = UserForm.Picture,
             };
             
             await _context.Users.AddAsync(user);
@@ -92,12 +93,7 @@ namespace API.Controllers
             var WroteToken = new JwtSecurityTokenHandler().WriteToken(token);
             //user.RememberMe.Add(new RememberMe() { RememberHash = WroteToken});
             //await _context.SaveChangesAsync();
-            Response.Cookies.Append("Authorization", WroteToken, new CookieOptions //ezt sürgősen írd át
-            {
-                HttpOnly = true,
-                Secure = false, //So it works in HTTP
-                SameSite = SameSiteMode.Strict
-            });
+            Response.Headers.Append("Authorization", $"Bearer {WroteToken}");
             return Ok(new {message = "LoginSuccesful", token = WroteToken });
         }
 

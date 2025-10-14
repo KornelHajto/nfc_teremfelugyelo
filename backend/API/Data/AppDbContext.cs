@@ -19,5 +19,12 @@ namespace API.Data
         : base(options)
             {
             }
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Course>()
+                .HasMany(c => c.Students)
+                .WithMany(u => u.Courses)
+                .UsingEntity(j => j.ToTable("CourseStudents"));
+        }
     }
 }
