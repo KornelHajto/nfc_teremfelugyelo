@@ -37,27 +37,65 @@ namespace API.Controllers
             Key? key = await _context.Keys.FirstOrDefaultAsync(k => k.Hash == Keycard.Hash);
             if (key == null) { return Unauthorized(new { message = "KeycardNotFound" }); }
             User? user = await _context.Users
-            .Include(u => u.Keys)
-            .FirstOrDefaultAsync(u => u.Keys.Any(k => k.Hash == Keycard.Hash));
+                .Include(u => u.Keys)
+                .Include(u => u.Courses)
+                .ThenInclude(c => c.Classroom)
+                .FirstOrDefaultAsync(u => u.Keys.Any(k => k.Hash == Keycard.Hash));
             if (user == null) { return Unauthorized(new { message = "KeycardNotFound" }); }
             Classroom? room = await _context.Classrooms.FirstOrDefaultAsync(c => c.RoomId == Keycard.RoomId);
-            if(room == null) { return NotFound(new { message = "RoomNotFound" }); }
+            if (room == null) { return NotFound(new { message = "RoomNotFound" }); }
+
+            var now = DateTime.Now;
+            var userCourse = user.Courses
+                .FirstOrDefault(c => c.Classroom.RoomId == Keycard.RoomId && c.Date.Any(d => d.Date == now.Date));
+            if (userCourse == null)
+            {
+                return Unauthorized(new { message = "NoCourseInRoomToday" });
+            }
+
+            var scheduledDate = userCourse.Date.FirstOrDefault(d => d.Date == now.Date);
+            if (scheduledDate == default)
+            {
+                return Unauthorized(new { message = "NoCourseScheduledToday" });
+            }
+
+            var courseEndTime = scheduledDate + userCourse.Duration;
+            if (now > courseEndTime)
+            {
+                return Unauthorized(new { message = "CourseAlreadyEnded" });
+            }
+
+            var isLate = now > scheduledDate;
+            var attendanceType = isLate ? AttendanceTypes.Late : AttendanceTypes.Arrived;
+
             room.InRoom.Add(user);
+
+            Attendance attendance = new()
+            {
+                User = user,
+                Subject = userCourse.Subject,
+                Arrival = now,
+                AttendanceType = attendanceType,
+                Comment = ""
+            };
+            await _context.Attendances.AddAsync(attendance);
 
             string newId = await ReplaceUID(key);
             Log log = new()
             {
-                Date = DateTime.Now,
+                Date = now,
                 User = user,
                 Classroom = room,
                 EnterType = EnterTypes.Enter
             };
             await _context.Logs.AddAsync(log);
             await _context.SaveChangesAsync();
-            if (user.AdminLevel == AdminLevels.Admin) {
-                return Ok(new { message = "AuthorizedAsAdmin", newUID = newId });
+
+            if (user.AdminLevel == AdminLevels.Admin)
+            {
+                return Ok(new { message = "AuthorizedAsAdmin", newUID = newId, attendanceType });
             }
-            return Ok(new { message = "Authorized", newUID = newId });
+            return Ok(new { message = "Authorized", newUID = newId, attendanceType });
         }
 
         [HttpPost("image")]

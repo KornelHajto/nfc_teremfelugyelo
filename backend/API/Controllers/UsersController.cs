@@ -10,7 +10,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-
+//GetAll users, subjects, courses, classrooms, attendances
 namespace API.Controllers
 {
     [Route("api/[controller]")]
@@ -122,6 +122,24 @@ namespace API.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "UserDeleted" });
+        }
+
+        [Authorize]
+        [HttpGet("adminlevel")]
+        public async Task<IActionResult> GetAdminLevel()
+        {
+            if (!ModelState.IsValid) { return BadRequest(new { message = "InvalidForm" }); }
+            var neptunId = User.FindFirst(ClaimTypes.Name)?.Value;
+            if (string.IsNullOrEmpty(neptunId))
+                return BadRequest(new { message = "NoId" });
+
+            User? user = await _context.Users
+                .Include(u => u.Courses)
+                .FirstOrDefaultAsync(u => u.NeptunId == neptunId);
+            if (user == null)
+                return Unauthorized(new { message = "NoUserFound" });
+
+            return Ok(new { message = "Authorized", level = user.AdminLevel });
         }
     }
 }

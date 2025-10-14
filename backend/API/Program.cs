@@ -1,8 +1,9 @@
 using API.Data;
-using Microsoft.EntityFrameworkCore;
+using API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using System;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System;
 using System.Text;
 
 namespace API
@@ -74,7 +75,18 @@ namespace API
                 });
             });
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", policy =>
+                {
+                    policy.AllowAnyOrigin()
+                          .AllowAnyHeader()
+                          .AllowAnyMethod();
+                });
+            });
+            builder.Services.AddHostedService<AttendanceService>();
             var app = builder.Build();
+            app.UseCors("AllowAll");
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
