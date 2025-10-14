@@ -25,8 +25,10 @@ namespace API.Controllers
             _configuration = configuration;
         }
 
+
+
         [HttpPost("create")]
-        public async Task<IActionResult> CreateUser([FromBody] UserDTO UserForm)
+        public async Task<IActionResult> CreateUser([FromBody] RegisterDTO UserForm)
         {
             if (!ModelState.IsValid) { return BadRequest(new { message = "InvalidForm" }); }
             if (UserForm.Password.Length < 8 )
@@ -47,6 +49,7 @@ namespace API.Controllers
             User user = new()
             {
                 NeptunId = UserForm.NeptunId.ToUpper(),
+                FullName = UserForm.FullName,
                 Password = PasswordHash,
             };
             
@@ -57,7 +60,7 @@ namespace API.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> LoginUser([FromBody] UserDTO UserForm)
+        public async Task<IActionResult> LoginUser([FromBody] LoginDTO UserForm)
         {
             if (!ModelState.IsValid) { return BadRequest(new { message = "InvalidForm" }); }
             User? user = await _context.Users.FirstOrDefaultAsync(u => UserForm.NeptunId.ToUpper() == u.NeptunId);
@@ -88,7 +91,7 @@ namespace API.Controllers
             var WroteToken = new JwtSecurityTokenHandler().WriteToken(token);
             //user.RememberMe.Add(new RememberMe() { RememberHash = WroteToken});
             //await _context.SaveChangesAsync();
-            Response.Cookies.Append("jwt", WroteToken, new CookieOptions
+            Response.Cookies.Append("Authorization", WroteToken, new CookieOptions //ezt sürgősen írd át
             {
                 HttpOnly = true,
                 Secure = false, //So it works in HTTP

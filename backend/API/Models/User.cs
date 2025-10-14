@@ -14,6 +14,8 @@ namespace API.Models
     {
         [Key]
         public required string NeptunId { get; set; }
+        [Required] 
+        public required string FullName { get; set; }
         [Required]
         public required string Password { get; set; }
         [Required]

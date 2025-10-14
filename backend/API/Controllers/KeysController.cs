@@ -16,7 +16,7 @@ namespace API.Controllers
     {
         private readonly AppDbContext _context;
 
-        public KeysController(AppDbContext context, IConfiguration configuration)
+        public KeysController(AppDbContext context)
         {
             _context = context;
         }
@@ -24,8 +24,8 @@ namespace API.Controllers
         private async Task<string> ReplaceUID(Key key)
         {
             string uid = Guid.NewGuid().ToString("N").Substring(0, 16);
-            key.Hash = uid;
-            await _context.SaveChangesAsync();
+            //key.Hash = uid;
+            //await _context.SaveChangesAsync();
             return uid;
         }
 

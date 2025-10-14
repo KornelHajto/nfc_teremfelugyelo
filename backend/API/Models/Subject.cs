@@ -9,6 +9,6 @@ namespace API.Models
         [Required]
         public required string Name { get; set; }
         [Required]
-        public required List<User> Teachers { get; set; } = new List<User>();
+        public List<User> Teachers { get; set; } = new List<User>();
     }
 }
