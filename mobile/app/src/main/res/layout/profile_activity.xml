@@ -1,14 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_margin="8dp"
-    android:layout_height="match_parent"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="4dp"
-    app:cardUseCompatPadding="true"
-    android:background="@android:color/white">
+    android:layout_height="match_parent">
 
     <!-- Center Floating NFC Button -->
     <LinearLayout
@@ -81,7 +75,6 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:background="#ECE3FF"
                 android:clickable="true"
                 android:focusable="true"
                 android:gravity="center"
@@ -167,7 +160,8 @@
                 android:focusable="true"
                 android:gravity="center"
                 android:orientation="vertical"
-                android:paddingVertical="4dp">
+                android:paddingVertical="4dp"
+                android:background="#ECE3FF">
 
                 <ImageView
                     android:layout_width="24dp"
@@ -184,109 +178,181 @@
 
         </LinearLayout>
 
-
     </RelativeLayout>
 
-    <!-- Scrollable content -->
     <ScrollView
-        android:id="@+id/scrollableContent"
-        android:layout_width="0dp"
+        android:id="@+id/scrollView2"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:fillViewport="true"
-        android:layout_marginBottom=""
-        app:layout_constraintTop_toTopOf="parent"
+        android:padding="16dp"
         app:layout_constraintBottom_toTopOf="@+id/bottomBar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.041">
 
         <LinearLayout
-            android:id="@+id/contentContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:dividerPadding="8dp"
+            android:gravity="center_horizontal"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:paddingBottom="16dp">
 
-            <!-- Next Class Section -->
+            <!-- Profile Section -->
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingTop="32dp"
+                android:paddingBottom="24dp">
+
+                <TextView
+                    android:id="@+id/tvProfileName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Tanuló neve"
+                    android:textColor="#4A148C"
+                    android:textSize="24sp"
+                    android:textStyle="bold" /> <!-- Deep purple -->
+
+                <!-- Neptun Code Badge -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/rounded_edittext_bg"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="8dp"
+                    android:layout_marginBottom="4dp"
+                    android:backgroundTintMode="src_over"
+                    android:clipToOutline="true"
+                    android:elevation="2dp">
+
+                <TextView
+                    android:id="@+id/tvNeptun"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Neptun kód: "
+                    android:textColor="#6A1B9A"
+                    android:textSize="14sp"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:id="@+id/tvNeptunCode"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="NK2D5G7"
+                    android:textColor="#6A1B9A"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+            </LinearLayout>
+
+            <!-- Notifications Header -->
+            <TextView
+                android:id="@+id/tvNotificationsHeader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="8dp"
+                android:paddingStart="16dp"
+                android:text="Értesítések"
+                android:textColor="#4A148C"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <!-- Notification Settings Container -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="8dp"
+                android:background="#FFFFFF"
+                android:backgroundTint="#FFFFFF"
+                android:clipToOutline="true"
+                android:dividerPadding="8dp"
+                android:elevation="2dp"
+                android:orientation="vertical"
+                android:padding="8dp">
+
+                <!-- Enable All Notifications -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="12dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Push értesítések"
+                            android:textColor="#4A148C"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Értesítések fogadása minden eseményről"
+                            android:textColor="#7E57C2"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                    <Switch
+                        android:id="@+id/switchAllNotifications"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="true"
+                        android:thumbTint="#6A1B9A"
+                        android:trackTint="#D1C4E9" />
+                </LinearLayout>
+
+
+            </LinearLayout>
+
+            <!-- Log Out Button -->
+            <LinearLayout
+                android:id="@+id/btnLogout"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:paddingBottom="8dp">
+                android:padding="16dp"
+                android:layout_marginTop="160dp"
+                android:background="@android:color/transparent"
+                android:clickable="true"
+                android:focusable="true">
 
+                <!-- Log Out Text -->
+                <TextView
+                    android:id="@+id/tvLogout"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Kijelentkezés"
+                    android:textColor="#DC2626"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <!-- Log Out Icon -->
                 <ImageView
+                    android:id="@+id/iconLogout"
                     android:layout_width="24dp"
                     android:layout_height="24dp"
-                    android:src="@drawable/next_class_icon"
-                    android:contentDescription="Next Class Icon"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Következő órám"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:paddingStart="8dp"/>
+                    app:tint="#DC2626"
+                    android:src="@drawable/zone_leave" />
             </LinearLayout>
-
-            <!-- Placeholder for next class card -->
-            <include layout="@layout/card_simple_layout"/>
-
-            <!-- Today's Classes Section -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingTop="16dp"
-                android:paddingBottom="8dp">
-
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/upcoming_event_icon"
-                    android:contentDescription="Today's Classes Icon" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Mai óráim"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:paddingStart="8dp"/>
-            </LinearLayout>
-
-            <!-- Multiple class cards -->
-            <include layout="@layout/card_simple_layout"/>
-            <include layout="@layout/card_simple_layout"/>
-
-            <!-- Upcoming Exams Section -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingTop="16dp"
-                android:paddingBottom="8dp">
-
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/exam_icon"
-                    android:contentDescription="Upcoming Exams Icon" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Zárthelyik a közeljövőben"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:paddingStart="8dp" />
-            </LinearLayout>
-
-            <!-- Exam cards -->
-            <include layout="@layout/card_exam_layout"/>
-            <include layout="@layout/card_exam_layout"/>
 
         </LinearLayout>
     </ScrollView>
