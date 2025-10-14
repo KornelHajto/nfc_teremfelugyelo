@@ -58,31 +58,7 @@
     const nfcIcon = document.getElementById('nfc-icon');
   const nfcText = document.getElementById('nfc-text');
 
-  // create websocket after we determine ROOM so we can pass ?room=room1 or ?room=room2
-  let ws = null;
-
-    // detect room from query parameter, e.g. ?room=room1 or ?room=room2
-    function getQueryParam(name){
-      const params = new URLSearchParams(window.location.search);
-      return params.get(name);
-    }
-    const ROOM = (function(){
-      const r = (getQueryParam('room') || '').toLowerCase();
-      if(r === 'room1' || r === 'room2') return r;
-      return null;
-    })();
-    if(ROOM){
-      // show room in header/status
-      document.title = document.title + ' - ' + ROOM.toUpperCase();
-      statusEl.textContent = 'Ready (' + ROOM + ')';
-      // visually show the room near the header
-      const h = document.querySelector('h1');
-      const badge = document.createElement('span'); badge.textContent = ROOM.toUpperCase(); badge.className='room-badge';
-      h.appendChild(badge);
-    }
-
-    // now open the websocket and include the room query param if present
-    ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws' + (ROOM ? ('?room=' + ROOM) : ''));
+    const ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws');
 
     function addLog(msg) {
       const t = new Date().toLocaleTimeString();
@@ -155,28 +131,21 @@
     ws.onerror = (e) => { addLog('WebSocket error'); console.error(e); }
 
     document.getElementById('enter').onclick = () => {
-      const cmd = ROOM ? `enter ${ROOM}` : 'enter';
-      ws.send(cmd);
-      addLog('Sent: ' + cmd);
+      ws.send('enter');
+      addLog('Sent: enter');
     }
     document.getElementById('leave').onclick = () => {
-      const cmd = ROOM ? `leave ${ROOM}` : 'leave';
-      ws.send(cmd);
-      addLog('Sent: ' + cmd);
+      ws.send('leave');
+      addLog('Sent: leave');
     }
     document.getElementById('show').onclick = () => {
       ws.send('get_last');
       addLog('Sent: get_last');
     }
     document.getElementById('cancel').onclick = () => {
-      // send cancel to server so any running detect loop is aborted
-      try {
-        ws.send('cancel');
-        addLog('Sent: cancel');
-      } catch (e) {
-        addLog('Failed to send cancel');
-      }
+      // Cancel is currently just a UI affordance; server-side cancel not implemented
       hideWaiting();
+      addLog('Cancelled (client-side)');
     }
 
     // Size toggle (compact / large)

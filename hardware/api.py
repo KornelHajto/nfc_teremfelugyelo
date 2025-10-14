@@ -25,6 +25,7 @@ def read_card_data(pn532, uid, block=4):
 
 def init_readers():
     """Initialize and return (pn532_i2c, pn532_uart)."""
+    # default: initialize both readers
     i2c = busio.I2C(board.SCL, board.SDA)
     pn532_i2c = PN532_I2C(i2c)
     pn532_i2c.SAM_configuration()
@@ -33,6 +34,25 @@ def init_readers():
     pn532_uart = PN532_UART(uart)
     pn532_uart.SAM_configuration()
 
+    return pn532_i2c, pn532_uart
+
+
+def init_readers_for(room=None):
+    """Initialize only the readers needed for `room`.
+
+    room=None -> both, 'room1' -> only I2C, 'room2' -> only UART
+    Returns (pn532_i2c_or_None, pn532_uart_or_None)
+    """
+    pn532_i2c = None
+    pn532_uart = None
+    if room is None or room == 'room1':
+        i2c = busio.I2C(board.SCL, board.SDA)
+        pn532_i2c = PN532_I2C(i2c)
+        pn532_i2c.SAM_configuration()
+    if room is None or room == 'room2':
+        uart = serial.Serial("/dev/serial0", baudrate=115200, timeout=1)
+        pn532_uart = PN532_UART(uart)
+        pn532_uart.SAM_configuration()
     return pn532_i2c, pn532_uart
 
 
@@ -64,17 +84,65 @@ def detect_card_once(pn532_i2c, pn532_uart, timeout=10.0):
     return None, None, None
 
 
-# Global storage for the last 'enter' card
-last_entry = None
+def detect_card_for_room(pn532_i2c, pn532_uart, room=None, timeout=10.0, cancel_event=None):
+    """Wait up to `timeout` seconds for a card on the reader for `room`.
+
+    room: None -> any (original behavior), 'room1' -> I2C only, 'room2' -> UART only
+    Returns (sensor, uid_hex, data) or (None, None, None) on timeout.
+    """
+    deadline = time.time() + timeout
+    last_uid_i2c = None
+    last_uid_uart = None
+
+    while time.time() < deadline:
+        # allow cooperative cancellation from the caller (threading.Event)
+        try:
+            if cancel_event is not None and getattr(cancel_event, 'is_set', lambda: False)():
+                return 'CANCELLED', None, None
+        except Exception:
+            # if cancel_event is mis-specified, ignore and continue
+            pass
+        if room is None or room == 'room1':
+            if pn532_i2c is not None:
+                try:
+                    uid_i2c = pn532_i2c.read_passive_target(timeout=0.5)
+                except RuntimeError as e:
+                    # transient PN532 error; skip this poll
+                    # print('I2C read error:', e)
+                    uid_i2c = None
+                if uid_i2c is not None and uid_i2c != last_uid_i2c:
+                    uid_hex = ''.join([format(i, '02X') for i in uid_i2c])
+                    data = read_card_data(pn532_i2c, uid_i2c)
+                    return 'I2C', uid_hex, data
+                elif uid_i2c is None:
+                    last_uid_i2c = None
+
+        if room is None or room == 'room2':
+            if pn532_uart is not None:
+                try:
+                    uid_uart = pn532_uart.read_passive_target(timeout=0.5)
+                except RuntimeError as e:
+                    # transient PN532 error on UART reader
+                    # print('UART read error:', e)
+                    uid_uart = None
+                if uid_uart is not None and uid_uart != last_uid_uart:
+                    uid_hex = ''.join([format(i, '02X') for i in uid_uart])
+                    data = read_card_data(pn532_uart, uid_uart)
+                    return 'UART', uid_hex, data
+                elif uid_uart is None:
+                    last_uid_uart = None
+
+        time.sleep(0.1)
+
+    return None, None, None
+
+
+# Per-room storage for the last 'enter' card to avoid cross-room leakage
+last_entries = {}
 
 # Default endpoints (change these to your real endpoints)
-<<<<<<< HEAD
-ENTER_URL = 'http://example.com/enter'
-LEAVE_URL = 'http://example.com/leave'
-=======
 ENTER_URL = 'http://192.168.153.78:5189/api/Keys/enter'
 LEAVE_URL = 'http://192.168.153.78:5189/api/leave'
->>>>>>> 288cc85 (working hard on hardware side - batmaan)
 
 
 def send_post(url, payload):
@@ -89,49 +157,46 @@ def send_post(url, payload):
         return None
 
 
-def enter_mode(timeout=10.0):
-    """Wait for a card once, store which sensor it came from and send to ENTER_URL."""
+def enter_mode(room=None, timeout=10.0, cancel_event=None):
+    """Wait for a card on the reader assigned to `room` ('room1' or 'room2').
+
+    Returns a dict with structured result.
+    """
     global last_entry
-    print("Enter mode: waiting for a card...")
-<<<<<<< HEAD
-    pn532_i2c, pn532_uart = init_readers()
-    sensor, uid, data = detect_card_once(pn532_i2c, pn532_uart, timeout=timeout)
-    if sensor is None:
-        print("No card detected (timeout).")
-        return
-
-    if sensor == "UART":
-        sensor = "Room 2"
-    elif sensor == "I2C":
-        sensor = "Room 1"
-
-    last_entry = {
-        'Room': sensor,
-        'Key': data,
-    }
-
-    print(last_entry)
-=======
+    print(f"Enter mode: waiting for a card... room={room}")
     try:
-        pn532_i2c, pn532_uart = init_readers()
+        pn532_i2c, pn532_uart = init_readers_for(room)
     except Exception as e:
         return {'status': 'error', 'error': 'init_readers_failed', 'message': str(e)}
-
-    sensor, uid, data = detect_card_once(pn532_i2c, pn532_uart, timeout=timeout)
+    try:
+        # pass cancel_event through to the detect loop so callers (websocket) can cancel
+        sensor, uid, data = detect_card_for_room(pn532_i2c, pn532_uart, room=room, timeout=timeout, cancel_event=cancel_event)
+    except Exception as e:
+        return {'status': 'error', 'error': 'detection_failed', 'message': str(e)}
     if sensor is None:
         return {'status': 'timeout', 'message': 'no_card_detected'}
+    if sensor == 'CANCELLED':
+        return {'status': 'cancelled', 'message': 'operation_cancelled'}
 
     if sensor == "UART":
         sensor_name = "Room 2"
+        room_name = 'room2'
     elif sensor == "I2C":
         sensor_name = "Room 1"
+        room_name = 'room1'
     else:
         sensor_name = sensor
+        room_name = None
 
     last_entry = {
         'Room': sensor_name,
         'hash': data,
+        'uid': uid,
+        'room': room_name,
     }
+    # store per-room
+    key = room_name or 'unknown'
+    last_entries[key] = last_entry
 
     resp = send_post(ENTER_URL, last_entry)
     if resp is None:
@@ -143,46 +208,41 @@ def enter_mode(timeout=10.0):
         content = resp.text
 
     if 200 <= resp.status_code < 300:
-        return {'status': 'ok', 'code': resp.status_code, 'response': content, 'entry': last_entry}
+                return {'status': 'ok', 'code': resp.status_code, 'response': content, 'entry': last_entry}
     else:
         return {'status': 'error', 'code': resp.status_code, 'response': content, 'entry': last_entry}
->>>>>>> 288cc85 (working hard on hardware side - batmaan)
 
-def leave_mode(timeout=10.0):
-    """Wait for a card once in leave mode and send to LEAVE_URL. Includes last_entry if present."""
-    print("Leave mode: waiting for a card...")
-<<<<<<< HEAD
-    pn532_i2c, pn532_uart = init_readers()
-    sensor, uid, data = detect_card_once(pn532_i2c, pn532_uart, timeout=timeout)
-    if sensor is None:
-        print("No card detected (timeout).")
-        return
-
-    if sensor == "UART":
-        sensor = "Room 2"
-    elif sensor == "I2C":
-        sensor = "Room 1"
-
-    leave_card = {'Key': data}
-    print(leave_card)
-=======
+def leave_mode(room=None, timeout=10.0, cancel_event=None):
+    """Wait for a card on the reader assigned to `room` and send leave request."""
+    print(f"Leave mode: waiting for a card... room={room}")
     try:
-        pn532_i2c, pn532_uart = init_readers()
+        pn532_i2c, pn532_uart = init_readers_for(room)
     except Exception as e:
         return {'status': 'error', 'error': 'init_readers_failed', 'message': str(e)}
-
-    sensor, uid, data = detect_card_once(pn532_i2c, pn532_uart, timeout=timeout)
+    try:
+        sensor, uid, data = detect_card_for_room(pn532_i2c, pn532_uart, room=room, timeout=timeout, cancel_event=cancel_event)
+    except Exception as e:
+        return {'status': 'error', 'error': 'detection_failed', 'message': str(e)}
     if sensor is None:
         return {'status': 'timeout', 'message': 'no_card_detected'}
+    if sensor == 'CANCELLED':
+        return {'status': 'cancelled', 'message': 'operation_cancelled'}
 
     if sensor == "UART":
         sensor_name = "Room 2"
+        room_name = 'room2'
     elif sensor == "I2C":
         sensor_name = "Room 1"
+        room_name = 'room1'
     else:
         sensor_name = sensor
+        room_name = None
 
-    leave_card = {'Room': sensor_name, 'Key': data}
+    leave_card = {'Room': sensor_name, 'Key': data, 'uid': uid, 'room': room_name}
+
+    # store per-room last leave info too (named with 'leave' prefix)
+    key = room_name or 'unknown'
+    last_entries[key] = leave_card
 
     resp = send_post(LEAVE_URL, leave_card)
     if resp is None:
@@ -197,7 +257,6 @@ def leave_mode(timeout=10.0):
         return {'status': 'ok', 'code': resp.status_code, 'response': content, 'leave': leave_card}
     else:
         return {'status': 'error', 'code': resp.status_code, 'response': content, 'leave': leave_card}
->>>>>>> 288cc85 (working hard on hardware side - batmaan)
 
 
 def mode_menu():
