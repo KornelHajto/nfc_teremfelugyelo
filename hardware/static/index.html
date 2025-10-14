@@ -1,0 +1,191 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Simple NFC GUI</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Simple NFC GUI</h1>
+    <div class="controls">
+    <div class="buttons">
+      <button id="enter" class="primary">Enter</button>
+      <button id="leave" class="primary">Leave</button>
+      <button id="show">Show last entry</button>
+      <button id="cancel" class="muted">Cancel</button>
+      <button id="size-toggle" class="muted">Size: Auto</button>
+    </div>
+    <div id="status" class="status">Disconnected</div>
+  </div>
+
+  <div id="nfc-wrap" class="nfc-wrap">
+    <!-- NFC icon (SVG) -->
+    <div id="nfc-icon" style="width:120px; height:120px; opacity:0.15; transition:opacity 200ms;">
+      <div class="nfc-visual">
+        <div class="ring ring-3"></div>
+        <div class="ring ring-2"></div>
+        <div class="ring ring-1"></div>
+        <div class="card"></div>
+        <div class="check">✓</div>
+      </div>
+    </div>
+
+    <div>
+      <div id="nfc-text" class="nfc-text">Idle</div>
+      <div class="nfc-sub">Status will appear here when waiting for a card</div>
+    </div>
+  </div>
+
+    <div class="panels">
+    <div class="panel">
+      <h3>Log</h3>
+      <pre id="log"></pre>
+    </div>
+    <div class="panel">
+      <h3>Last entry</h3>
+      <pre id="last">(none)</pre>
+    </div>
+    </div>
+  </div>
+
+  <!-- Toast for feedback -->
+  <div id="toast" class="toast" aria-hidden="true"></div>
+
+  <script>
+    const logEl = document.getElementById('log');
+    const statusEl = document.getElementById('status');
+    const nfcIcon = document.getElementById('nfc-icon');
+  const nfcText = document.getElementById('nfc-text');
+
+    const ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws');
+
+    function addLog(msg) {
+      const t = new Date().toLocaleTimeString();
+      logEl.textContent += `[${t}] ${msg}\n`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function showWaiting(msg) {
+      nfcIcon.style.opacity = '1';
+      nfcIcon.classList.add('pulse');
+      nfcText.textContent = msg || 'Waiting for card...';
+      statusEl.textContent = 'Waiting';
+      document.getElementById('cancel').disabled = false;
+    }
+
+    function hideWaiting() {
+      nfcIcon.style.opacity = '0.15';
+      nfcIcon.classList.remove('pulse');
+      nfcText.textContent = 'Idle';
+      statusEl.textContent = 'Connected';
+      document.getElementById('cancel').disabled = true;
+    }
+
+    // Add simple CSS animation via JS-inserted style
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes nfc-pulse { 0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(79,195,247,0.0)); } 50% { transform: scale(1.08); filter: drop-shadow(0 6px 12px rgba(79,195,247,0.25)); } 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(79,195,247,0.0)); } }
+      #nfc-icon.pulse svg { animation: nfc-pulse 1s ease-in-out infinite; }
+    `;
+    document.head.appendChild(style);
+
+    ws.onopen = () => {
+      statusEl.textContent = 'Connected';
+      addLog('WebSocket connected');
+      hideWaiting();
+    }
+
+    ws.onmessage = (ev) => {
+      // Try parse JSON first
+      let parsed = null;
+      try { parsed = JSON.parse(ev.data); } catch (e) { parsed = null; }
+
+        if (parsed && parsed.event) {
+        addLog('Event: ' + parsed.event + (parsed.last_entry ? ' - last_entry present' : ''));
+        // When enter_done or leave_done, hide waiting
+        if (parsed.event === 'enter_done' || parsed.event === 'leave_done') {
+          hideWaiting();
+          addLog('Result: ' + JSON.stringify(parsed));
+          // visual feedback
+          showToast(parsed.event === 'enter_done' ? 'Entry recorded' : 'Leave recorded', 'success');
+          if (parsed.last_entry) {
+            document.getElementById('last').textContent = JSON.stringify(parsed.last_entry, null, 2);
+          }
+        } else if (parsed.event === 'last_entry') {
+          hideWaiting();
+          addLog('Last entry: ' + JSON.stringify(parsed.last_entry));
+          document.getElementById('last').textContent = JSON.stringify(parsed.last_entry, null, 2);
+        }
+      } else {
+        const text = ev.data.toString();
+        addLog(text);
+        // If server says waiting for card, show animation
+        if (text.toLowerCase().includes('waiting for card')) {
+          showWaiting(text);
+        }
+      }
+    }
+
+    ws.onclose = () => { statusEl.textContent = 'Disconnected'; addLog('Disconnected'); hideWaiting(); }
+    ws.onerror = (e) => { addLog('WebSocket error'); console.error(e); }
+
+    document.getElementById('enter').onclick = () => {
+      ws.send('enter');
+      addLog('Sent: enter');
+    }
+    document.getElementById('leave').onclick = () => {
+      ws.send('leave');
+      addLog('Sent: leave');
+    }
+    document.getElementById('show').onclick = () => {
+      ws.send('get_last');
+      addLog('Sent: get_last');
+    }
+    document.getElementById('cancel').onclick = () => {
+      // Cancel is currently just a UI affordance; server-side cancel not implemented
+      hideWaiting();
+      addLog('Cancelled (client-side)');
+    }
+
+    // Size toggle (compact / large)
+    const sizeBtn = document.getElementById('size-toggle');
+    function updateSizeLabel(){
+      const active = document.documentElement.classList.contains('scale-large');
+      sizeBtn.textContent = active ? 'Size: Large' : 'Size: Auto';
+    }
+    sizeBtn.onclick = () => {
+      document.documentElement.classList.toggle('scale-large');
+      localStorage.setItem('scaleLarge', document.documentElement.classList.contains('scale-large') ? '1' : '0');
+      updateSizeLabel();
+    }
+    // restore
+    if (localStorage.getItem('scaleLarge') === '1') document.documentElement.classList.add('scale-large');
+    updateSizeLabel();
+
+    function showToast(message, type='success'){
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.remove('error','success');
+      toast.classList.add('show', type, 'big');
+      toast.setAttribute('aria-hidden', 'false');
+      // icon glow: success (blue) or error (red)
+      nfcIcon.classList.remove('success','error');
+      nfcIcon.classList.add(type === 'error' ? 'error' : 'success');
+      // highlight last panel on success, highlight error panel on error
+      const lastPanel = document.getElementById('last');
+      if(type === 'error'){
+        lastPanel.parentElement.classList.add('error-highlight');
+      } else {
+        lastPanel.parentElement.classList.add('highlight');
+      }
+      setTimeout(()=>{
+        toast.classList.remove('show');
+        toast.setAttribute('aria-hidden', 'true');
+        nfcIcon.classList.remove('success','error');
+        lastPanel.parentElement.classList.remove('highlight','error-highlight');
+      }, 2200);
+    }
+  </script>
+</body>
+</html>

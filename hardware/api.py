@@ -68,8 +68,13 @@ def detect_card_once(pn532_i2c, pn532_uart, timeout=10.0):
 last_entry = None
 
 # Default endpoints (change these to your real endpoints)
+<<<<<<< HEAD
 ENTER_URL = 'http://example.com/enter'
 LEAVE_URL = 'http://example.com/leave'
+=======
+ENTER_URL = 'http://192.168.153.78:5189/api/Keys/enter'
+LEAVE_URL = 'http://192.168.153.78:5189/api/leave'
+>>>>>>> 288cc85 (working hard on hardware side - batmaan)
 
 
 def send_post(url, payload):
@@ -88,6 +93,7 @@ def enter_mode(timeout=10.0):
     """Wait for a card once, store which sensor it came from and send to ENTER_URL."""
     global last_entry
     print("Enter mode: waiting for a card...")
+<<<<<<< HEAD
     pn532_i2c, pn532_uart = init_readers()
     sensor, uid, data = detect_card_once(pn532_i2c, pn532_uart, timeout=timeout)
     if sensor is None:
@@ -105,10 +111,47 @@ def enter_mode(timeout=10.0):
     }
 
     print(last_entry)
+=======
+    try:
+        pn532_i2c, pn532_uart = init_readers()
+    except Exception as e:
+        return {'status': 'error', 'error': 'init_readers_failed', 'message': str(e)}
+
+    sensor, uid, data = detect_card_once(pn532_i2c, pn532_uart, timeout=timeout)
+    if sensor is None:
+        return {'status': 'timeout', 'message': 'no_card_detected'}
+
+    if sensor == "UART":
+        sensor_name = "Room 2"
+    elif sensor == "I2C":
+        sensor_name = "Room 1"
+    else:
+        sensor_name = sensor
+
+    last_entry = {
+        'Room': sensor_name,
+        'hash': data,
+    }
+
+    resp = send_post(ENTER_URL, last_entry)
+    if resp is None:
+        return {'status': 'http_error', 'message': 'no_response', 'entry': last_entry}
+
+    try:
+        content = resp.json()
+    except Exception:
+        content = resp.text
+
+    if 200 <= resp.status_code < 300:
+        return {'status': 'ok', 'code': resp.status_code, 'response': content, 'entry': last_entry}
+    else:
+        return {'status': 'error', 'code': resp.status_code, 'response': content, 'entry': last_entry}
+>>>>>>> 288cc85 (working hard on hardware side - batmaan)
 
 def leave_mode(timeout=10.0):
     """Wait for a card once in leave mode and send to LEAVE_URL. Includes last_entry if present."""
     print("Leave mode: waiting for a card...")
+<<<<<<< HEAD
     pn532_i2c, pn532_uart = init_readers()
     sensor, uid, data = detect_card_once(pn532_i2c, pn532_uart, timeout=timeout)
     if sensor is None:
@@ -122,6 +165,39 @@ def leave_mode(timeout=10.0):
 
     leave_card = {'Key': data}
     print(leave_card)
+=======
+    try:
+        pn532_i2c, pn532_uart = init_readers()
+    except Exception as e:
+        return {'status': 'error', 'error': 'init_readers_failed', 'message': str(e)}
+
+    sensor, uid, data = detect_card_once(pn532_i2c, pn532_uart, timeout=timeout)
+    if sensor is None:
+        return {'status': 'timeout', 'message': 'no_card_detected'}
+
+    if sensor == "UART":
+        sensor_name = "Room 2"
+    elif sensor == "I2C":
+        sensor_name = "Room 1"
+    else:
+        sensor_name = sensor
+
+    leave_card = {'Room': sensor_name, 'Key': data}
+
+    resp = send_post(LEAVE_URL, leave_card)
+    if resp is None:
+        return {'status': 'http_error', 'message': 'no_response', 'leave': leave_card}
+
+    try:
+        content = resp.json()
+    except Exception:
+        content = resp.text
+
+    if 200 <= resp.status_code < 300:
+        return {'status': 'ok', 'code': resp.status_code, 'response': content, 'leave': leave_card}
+    else:
+        return {'status': 'error', 'code': resp.status_code, 'response': content, 'leave': leave_card}
+>>>>>>> 288cc85 (working hard on hardware side - batmaan)
 
 
 def mode_menu():
