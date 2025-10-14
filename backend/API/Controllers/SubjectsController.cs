@@ -24,6 +24,7 @@ namespace API.Controllers
         [HttpPost("create")]
         public async Task<IActionResult> CreateSubject([FromBody] CreateSubjectDTO subject)
         {
+            if (!ModelState.IsValid) { return BadRequest(new { message = "InvalidForm" }); }
             var neptunId = User.FindFirst(ClaimTypes.Name)?.Value;
             if (string.IsNullOrEmpty(neptunId))
                 return BadRequest(new { message = "NoId" });
@@ -49,6 +50,33 @@ namespace API.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "SubjectCreated" });
+        }
+
+        [Authorize]
+        [HttpDelete("delete")]
+        public async Task<IActionResult> DeleteSubject([FromBody] DeleteSubjectDTO subject)
+        {
+            if (!ModelState.IsValid) { return BadRequest(new { message = "InvalidForm" }); }
+            var neptunId = User.FindFirst(ClaimTypes.Name)?.Value;
+            if (string.IsNullOrEmpty(neptunId))
+                return BadRequest(new { message = "NoId" });
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.NeptunId == neptunId);
+            if (user == null)
+                return Unauthorized(new { message = "NoUserFound" });
+
+            if (user.AdminLevel != AdminLevels.Admin)
+                return Unauthorized(new { message = "NoPermission" });
+
+            Subject? subjectToDel = await _context.Subjects.FirstOrDefaultAsync(c => c.Id == subject.Id);
+            if (subjectToDel == null)
+            {
+                return NotFound(new { message = "SubjectNotFound" });
+            }
+            _context.Subjects.Remove(subjectToDel);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "SubjectDeleted" });
         }
     }
 }

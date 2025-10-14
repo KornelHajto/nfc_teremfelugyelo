@@ -23,23 +23,51 @@ namespace API.Controllers
 
         [Authorize]
         [HttpPost("create")]
-        public async Task<IActionResult> CreateClassroom([FromBody] CreateClassroomDTO classroom)
+        public async Task<IActionResult> CreateClassroom([FromBody] ClassroomDTO classroom)
         {
+            if (!ModelState.IsValid) { return BadRequest(new { message = "InvalidForm" }); }
             var neptunId = User.FindFirst(ClaimTypes.Name)?.Value;
             if(neptunId == null) { return BadRequest(new { message = "NoId" }); }
             User? user = await _context.Users.FirstOrDefaultAsync(u => neptunId == u.NeptunId);
             if (user == null) { return Unauthorized(new { message = "NoUserFound" }); }
             if (user.AdminLevel != AdminLevels.Admin) { return Unauthorized(new { message = "NoPermission" }); }
-            bool exists = await _context.Classrooms.AnyAsync(c => c.RoomId == classroom.Name);
+            bool exists = await _context.Classrooms.AnyAsync(c => c.RoomId == classroom.RoomId);
             if (exists)
             {
                 return Conflict(new { message = "ClassroomNameTaken" });
             }
-            Classroom newClassroom = new() { RoomId = classroom.Name };
+            Classroom newClassroom = new() { RoomId = classroom.RoomId };
             await _context.Classrooms.AddAsync(newClassroom);
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "ClassroomCreated" });
+        }
+
+        [Authorize]
+        [HttpDelete("delete")]
+        public async Task<IActionResult> DeleteClassroom([FromBody] ClassroomDTO classroom)
+        {
+            if (!ModelState.IsValid) { return BadRequest(new { message = "InvalidForm" }); }
+            var neptunId = User.FindFirst(ClaimTypes.Name)?.Value;
+            if (string.IsNullOrEmpty(neptunId))
+                return BadRequest(new { message = "NoId" });
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.NeptunId == neptunId);
+            if (user == null)
+                return Unauthorized(new { message = "NoUserFound" });
+
+            if (user.AdminLevel != AdminLevels.Admin)
+                return Unauthorized(new { message = "NoPermission" });
+
+            Classroom? roomToDel = await _context.Classrooms.FirstOrDefaultAsync(c => c.RoomId == classroom.RoomId);
+            if (roomToDel == null)
+            {
+                return NotFound(new { message = "ClassroomNotFound" });
+            }
+            _context.Classrooms.Remove(roomToDel);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "ClassroomDeleted" });
         }
     }
 }

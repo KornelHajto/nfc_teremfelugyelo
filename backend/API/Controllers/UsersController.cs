@@ -1,6 +1,7 @@
 ﻿using API.Data;
 using API.DTOs;
 using API.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -98,6 +99,33 @@ namespace API.Controllers
                 SameSite = SameSiteMode.Strict
             });
             return Ok(new {message = "LoginSuccesful", token = WroteToken });
+        }
+
+        [Authorize]
+        [HttpDelete("delete")]
+        public async Task<IActionResult> DeleteUser([FromBody] DeleteUserDTO user)
+        {
+            if (!ModelState.IsValid) { return BadRequest(new { message = "InvalidForm" }); }
+            var neptunId = User.FindFirst(ClaimTypes.Name)?.Value;
+            if (string.IsNullOrEmpty(neptunId))
+                return BadRequest(new { message = "NoId" });
+
+            var userC = await _context.Users.FirstOrDefaultAsync(u => u.NeptunId == neptunId);
+            if (userC == null)
+                return Unauthorized(new { message = "NoUserFound" });
+
+            if (userC.AdminLevel != AdminLevels.Admin)
+                return Unauthorized(new { message = "NoPermission" });
+
+            User? userToDel = await _context.Users.FirstOrDefaultAsync(c => c.NeptunId == user.NeptunId);
+            if (userToDel == null)
+            {
+                return NotFound(new { message = "UserNotFound" });
+            }
+            _context.Users.Remove(userToDel);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "UserDeleted" });
         }
     }
 }

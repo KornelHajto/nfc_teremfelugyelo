@@ -4,6 +4,7 @@ using API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251014183310_AddUserListToClassrooms")]
+    partial class AddUserListToClassrooms
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -82,9 +85,6 @@ namespace API.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<TimeSpan>("Duration")
-                        .HasColumnType("time(6)");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -93,16 +93,11 @@ namespace API.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(255)");
 
-                    b.Property<string>("UserNeptunId")
-                        .HasColumnType("varchar(255)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("ClassroomRoomId");
 
                     b.HasIndex("SubjectId");
-
-                    b.HasIndex("UserNeptunId");
 
                     b.ToTable("Courses");
                 });
@@ -122,8 +117,8 @@ namespace API.Migrations
                     b.Property<int>("CourseId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("datetime(6)");
+                    b.Property<TimeSpan>("Date")
+                        .HasColumnType("time(6)");
 
                     b.Property<int>("Duration")
                         .HasColumnType("int");
@@ -261,10 +256,6 @@ namespace API.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<byte[]>("Picture")
-                        .IsRequired()
-                        .HasColumnType("longblob");
-
                     b.Property<string>("SubjectId")
                         .HasColumnType("varchar(255)");
 
@@ -309,10 +300,6 @@ namespace API.Migrations
                         .HasForeignKey("SubjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("API.Models.User", null)
-                        .WithMany("Courses")
-                        .HasForeignKey("UserNeptunId");
 
                     b.Navigation("Classroom");
 
@@ -408,8 +395,6 @@ namespace API.Migrations
 
             modelBuilder.Entity("API.Models.User", b =>
                 {
-                    b.Navigation("Courses");
-
                     b.Navigation("Keys");
 
                     b.Navigation("RememberMe");

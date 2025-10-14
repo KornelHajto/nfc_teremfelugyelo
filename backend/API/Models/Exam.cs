@@ -13,7 +13,7 @@ namespace API.Models
         [Required]
         public required Classroom Classroom { get; set; }
         [Required]
-        public required TimeSpan Date { get; set; }
+        public required DateTime Date { get; set; }
         [Required]
         public required int Duration { get; set; }
         [Required]
