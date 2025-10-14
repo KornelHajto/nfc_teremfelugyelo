@@ -4,6 +4,7 @@ using API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251014131750_RenamePassesToKeys")]
+    partial class RenamePassesToKeys
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -142,7 +145,7 @@ namespace API.Migrations
                     b.Property<string>("Hash")
                         .HasColumnType("varchar(255)");
 
-                    b.Property<int?>("LastUsedId")
+                    b.Property<int>("LastUsedId")
                         .HasColumnType("int");
 
                     b.Property<string>("UserNeptunId")
@@ -311,7 +314,9 @@ namespace API.Migrations
                 {
                     b.HasOne("API.Models.Log", "LastUsed")
                         .WithMany()
-                        .HasForeignKey("LastUsedId");
+                        .HasForeignKey("LastUsedId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("API.Models.User", null)
                         .WithMany("Keys")

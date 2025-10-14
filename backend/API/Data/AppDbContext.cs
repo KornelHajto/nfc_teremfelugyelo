@@ -11,7 +11,7 @@ namespace API.Data
         public DbSet<Course> Courses { get; set; }
         public DbSet<Exam> Exams { get; set; }
         public DbSet<Log> Logs { get; set; }
-        public DbSet<Key> Passes { get; set; }
+        public DbSet<Key> Keys { get; set; }
         public DbSet<RememberMe> RememberMe { get; set; }
         public DbSet<Subject> Subjects { get; set; }
 

@@ -7,6 +7,6 @@ namespace API.Models
         [Key]
         public string Hash { get; set; }
 
-        public Log LastUsed { get; set; }
+        public Log? LastUsed { get; set; }
     }
 }

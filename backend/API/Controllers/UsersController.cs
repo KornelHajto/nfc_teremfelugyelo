@@ -1,6 +1,13 @@
 ﻿using API.Data;
+using API.DTOs;
 using API.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 
 namespace API.Controllers
@@ -10,22 +17,84 @@ namespace API.Controllers
     public class UsersController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IConfiguration _configuration;
 
-        public UsersController(AppDbContext context)
+        public UsersController(AppDbContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         [HttpPost("create")]
-        public IActionResult CreateUser(string NeptunId, string Password)
+        public async Task<IActionResult> CreateUser([FromBody] UserDTO UserForm)
         {
+            if (!ModelState.IsValid) { return BadRequest(new { message = "InvalidForm" }); }
+            if (UserForm.Password.Length < 8 )
+            {
+                return Conflict(new { message = "PasswordTooShort" });
+            }
+            if (!(UserForm.Password.Any(char.IsDigit) && UserForm.Password.Any(char.IsLetter) && UserForm.Password.Any(char.IsUpper)))
+            {
+                return Conflict(new { message = "PasswordWrongChars" });
+            }
+
+            bool TakenAccount = _context.Users.Any(u => u.NeptunId == u.NeptunId);
+            if (TakenAccount) {
+                return Conflict(new { message = "TakenNeptunId" });
+            }
+
+            string PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(UserForm.Password, 13);
             User user = new()
             {
-                NeptunId = NeptunId,
-                Password = Password,
+                NeptunId = UserForm.NeptunId.ToUpper(),
+                Password = PasswordHash,
             };
+            
+            await _context.Users.AddAsync(user);
+            await _context.SaveChangesAsync();
 
-            return Ok("USER CREATED");
+            return Ok(new { message = "UserCreated"});
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> LoginUser([FromBody] UserDTO UserForm)
+        {
+            if (!ModelState.IsValid) { return BadRequest(new { message = "InvalidForm" }); }
+            User? user = await _context.Users.FirstOrDefaultAsync(u => UserForm.NeptunId.ToUpper() == u.NeptunId);
+            if (user == null)
+            {
+                return Unauthorized(new { message = "WrongUsernameOrPassword" });
+            }
+            if (!BCrypt.Net.BCrypt.EnhancedVerify(UserForm.Password, user.Password))
+            {
+                return Unauthorized(new {message = "WrongUsernameOrPassword"});
+            }
+            var claims = new[]
+            {   
+                new Claim(ClaimTypes.Name, user.NeptunId),
+            };
+            var jwtKey = _configuration["JwtKey"];
+            var keyBytes = Encoding.UTF8.GetBytes(jwtKey);
+            var key = new SymmetricSecurityKey(keyBytes);
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                issuer: "yourdomain.com",
+                audience: "yourdomain.com",
+                claims: claims,
+                expires: DateTime.Now.AddDays(1),
+                signingCredentials: creds
+            );
+            var WroteToken = new JwtSecurityTokenHandler().WriteToken(token);
+            //user.RememberMe.Add(new RememberMe() { RememberHash = WroteToken});
+            //await _context.SaveChangesAsync();
+            Response.Cookies.Append("jwt", WroteToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = false, //So it works in HTTP
+                SameSite = SameSiteMode.Strict
+            });
+            return Ok(new {message = "LoginSuccesful", token = WroteToken });
         }
     }
 }

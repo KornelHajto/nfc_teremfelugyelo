@@ -1,6 +1,9 @@
 using API.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace API
 {
@@ -10,7 +13,27 @@ namespace API
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
+            var jwtKey = builder.Configuration["JwtKey"];
+            var keyBytes = Encoding.UTF8.GetBytes(jwtKey);
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = "yourdomain.com",
+                    ValidAudience = "yourdomain.com",
+                    IssuerSigningKey = new SymmetricSecurityKey(keyBytes)
+                };
+            });
+
 
             builder.Services.AddDbContext<AppDbContext>(options =>
             {
