@@ -420,8 +420,15 @@ main {
     margin: 15px 0;
     text-align: left;
     border: 2px solid var(--border-color);
-    max-height: 20vh;
+    max-height: 30vh;
     overflow-y: auto;
+    min-height: 50px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.result-details:empty {
+    display: none;
 }
 
 .result-details pre {

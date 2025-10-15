@@ -61,6 +61,18 @@ async def websocket_handler(request):
                 elif sensor == 'CANCELLED':
                     await ws.send_str(json.dumps({'event': 'enter_cancelled'}))
                 else:
+                    # Check if we got data from the card
+                    if data is None:
+                        await ws.send_str(json.dumps({
+                            'event': 'enter_error',
+                            'result': {
+                                'code': None,
+                                'response': {'message': 'NoCardData'},
+                                'message': 'Could not read data from card'
+                            }
+                        }))
+                        continue
+                    
                     # Fetch reference image from API
                     import requests
                     reference_image = None
@@ -72,6 +84,7 @@ async def websocket_handler(request):
                         # Call /api/Keys/image with hash and roomId
                         image_url = 'http://192.168.153.78:5189/api/Keys/image'
                         payload = {'hash': data, 'roomId': room_id}
+                        print(f'[DEBUG] Fetching reference image for hash: {data[:20] if len(data) > 20 else data}...')
                         resp = requests.post(image_url, json=payload, timeout=10)
                         if resp.status_code == 200:
                             # Response is JSON: {"message": "Authorized", "image": "base64..."}
@@ -112,6 +125,18 @@ async def websocket_handler(request):
                 elif sensor == 'CANCELLED':
                     await ws.send_str(json.dumps({'event': 'leave_cancelled'}))
                 else:
+                    # Check if we got data from the card
+                    if data is None:
+                        await ws.send_str(json.dumps({
+                            'event': 'leave_error',
+                            'result': {
+                                'code': None,
+                                'response': {'message': 'NoCardData'},
+                                'message': 'Could not read data from card'
+                            }
+                        }))
+                        continue
+                    
                     # Send exit request immediately (no camera/face recognition needed for exit)
                     sensor_name = 'PC1' if sensor == 'I2C' else 'PC2' if sensor == 'UART' else sensor
                     room_name = room or sensor_name.lower()
@@ -121,7 +146,7 @@ async def websocket_handler(request):
                         'hash': data
                     }
                     
-                    print(f'[DEBUG] Sending exit request for hash: {data[:20]}...')
+                    print(f'[DEBUG] Sending exit request for hash: {data[:20] if len(data) > 20 else data}...')
                     
                     # Send exit request to API
                     resp = api.send_post(api.LEAVE_URL, leave_payload)
@@ -220,10 +245,15 @@ async def capture_handler(request):
     app = request.app
     pending_cards = app.get('pending_cards', {})
     reference_image = None
+    print(f'[DEBUG] Looking for room: {room}')
+    print(f'[DEBUG] pending_cards has {len(pending_cards)} entries')
     for ws, pending in pending_cards.items():
+        print(f'[DEBUG] Checking pending card: room={pending.get("room")}, has referenceImage={pending.get("referenceImage") is not None}')
         if pending.get('room') == room:
             reference_image = pending.get('referenceImage')
-            print(f'[DEBUG] Found pending card for room {room}, has referenceImage: {reference_image is not None}')
+            print(f'[DEBUG] Found pending card for room {room}, referenceImage type: {type(reference_image)}, is not None: {reference_image is not None}')
+            if reference_image:
+                print(f'[DEBUG] referenceImage length: {len(reference_image) if isinstance(reference_image, str) else "not a string"}')
             break
     if not image:
         return web.json_response({'status': 'error', 'message': 'no_image'}, status=400)

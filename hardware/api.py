@@ -12,7 +12,47 @@ except Exception:
     requests = None
 
 
+def read_hce_data(pn532, uid):
+    """Try to read data from HCE (Host Card Emulation) device like Android phone.
+    
+    Uses ISO-DEP (ISO 14443-4) protocol to communicate with HCE apps.
+    Returns the data string or None if failed.
+    """
+    try:
+        # SELECT APDU command for custom AID
+        select_apdu = bytes.fromhex('00A4040007F0010203040506')
+        
+        # Try to communicate using InDataExchange
+        response = pn532.call_function(
+            0x40,  # InDataExchange command
+            params=bytearray([0x01]) + bytearray(select_apdu),
+            response_length=255,
+            timeout=1.0
+        )
+        
+        if response and len(response) > 1:
+            # Check status byte (first byte should be 0x00 for success)
+            status = response[0]
+            if status == 0x00:
+                # Extract data (skip status byte)
+                data_bytes = response[1:]
+                # Remove status word (last 2 bytes like 0x90 0x00)
+                if len(data_bytes) >= 2:
+                    data_bytes = data_bytes[:-2]
+                # Convert to string
+                data = data_bytes.decode('utf-8', errors='ignore').rstrip('\x00')
+                return data if data else None
+        return None
+    except Exception as e:
+        print(f"HCE read error: {e}")
+        return None
+
+
 def read_card_data(pn532, uid, block=4):
+    """Try to read data from MIFARE Classic card.
+    
+    Returns the data string or None if failed.
+    """
     try:
         key = b'\xFF\xFF\xFF\xFF\xFF\xFF'
         if pn532.mifare_classic_authenticate_block(uid, block, 0x60, key):
@@ -21,6 +61,22 @@ def read_card_data(pn532, uid, block=4):
         return None
     except Exception:
         return None
+
+
+def read_card_or_hce(pn532, uid):
+    """Try to read from both MIFARE Classic and HCE.
+    
+    First tries MIFARE Classic, then HCE if that fails.
+    Returns the data string or None.
+    """
+    # Try MIFARE Classic first
+    data = read_card_data(pn532, uid)
+    if data:
+        return data
+    
+    # If MIFARE fails, try HCE
+    data = read_hce_data(pn532, uid)
+    return data
 
 
 def init_readers():
@@ -61,6 +117,7 @@ def detect_card_once(pn532_i2c, pn532_uart, timeout=10.0):
 
     Returns a tuple (sensor, uid_hex, data) or (None, None, None) on timeout.
     sensor is 'I2C' or 'UART'.
+    Supports both MIFARE Classic cards and HCE devices.
     """
     deadline = time.time() + timeout
     last_uid_i2c = None
@@ -70,13 +127,13 @@ def detect_card_once(pn532_i2c, pn532_uart, timeout=10.0):
         uid_i2c = pn532_i2c.read_passive_target(timeout=0.5)
         if uid_i2c is not None and uid_i2c != last_uid_i2c:
             uid_hex = ''.join([format(i, '02X') for i in uid_i2c])
-            data = read_card_data(pn532_i2c, uid_i2c)
+            data = read_card_or_hce(pn532_i2c, uid_i2c)
             return 'I2C', uid_hex, data
 
         uid_uart = pn532_uart.read_passive_target(timeout=0.5)
         if uid_uart is not None and uid_uart != last_uid_uart:
             uid_hex = ''.join([format(i, '02X') for i in uid_uart])
-            data = read_card_data(pn532_uart, uid_uart)
+            data = read_card_or_hce(pn532_uart, uid_uart)
             return 'UART', uid_hex, data
 
         time.sleep(0.1)
@@ -112,7 +169,7 @@ def detect_card_for_room(pn532_i2c, pn532_uart, room=None, timeout=10.0, cancel_
                     uid_i2c = None
                 if uid_i2c is not None and uid_i2c != last_uid_i2c:
                     uid_hex = ''.join([format(i, '02X') for i in uid_i2c])
-                    data = read_card_data(pn532_i2c, uid_i2c)
+                    data = read_card_or_hce(pn532_i2c, uid_i2c)
                     return 'I2C', uid_hex, data
                 elif uid_i2c is None:
                     last_uid_i2c = None
@@ -127,7 +184,7 @@ def detect_card_for_room(pn532_i2c, pn532_uart, room=None, timeout=10.0, cancel_
                     uid_uart = None
                 if uid_uart is not None and uid_uart != last_uid_uart:
                     uid_hex = ''.join([format(i, '02X') for i in uid_uart])
-                    data = read_card_data(pn532_uart, uid_uart)
+                    data = read_card_or_hce(pn532_uart, uid_uart)
                     return 'UART', uid_hex, data
                 elif uid_uart is None:
                     last_uid_uart = None

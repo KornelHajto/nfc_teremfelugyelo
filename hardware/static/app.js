@@ -407,8 +407,11 @@ function handleApiResponse(isEnter, result, isError = false) {
         return;
     }
     
-    const apiMessage = result.message || '';
+    // Extract the message from the response object
+    const apiMessage = result.response?.message || result.message || '';
     const mode = isEnter ? 'Entry' : 'Exit';
+    
+    console.log('handleApiResponse:', { isEnter, result, apiMessage, isError });
     
     // Success messages
     const successMessages = {
@@ -465,8 +468,26 @@ function handleApiResponse(isEnter, result, isError = false) {
             icon: '❌',
             success: false
         },
-        'NotEnrolledInExamCourse': {
+        'UserAlreadyInRoom': {
+            title: 'Already Checked In',
+            message: 'You are already checked into a room. Please exit first before entering another room.',
+            icon: '⚠',
+            success: false
+        },
+        'DeniedByTeacher': {
             title: 'Access Denied',
+            message: 'Your exam entry request was denied by the teacher.',
+            icon: '🚫',
+            success: false
+        },
+        'WaitForResponse': {
+            title: 'Waiting for Approval',
+            message: 'Your exam entry request is pending. Please wait for teacher approval.',
+            icon: '⏳',
+            success: false
+        },
+        'NotEnrolledInExamCourse': {
+            title: 'Not Enrolled',
             message: 'You are not enrolled in the course for this exam. Entry not allowed.',
             icon: '🚫',
             success: false
@@ -515,35 +536,79 @@ function handleApiResponse(isEnter, result, isError = false) {
     
     // Show attendance type for successful course entries
     let detailsText = messageConfig.details || '';
-    if (messageConfig.success && result.attendanceType) {
-        const attendanceStatus = result.attendanceType === 'Late' 
+    const attendanceType = result.response?.attendanceType || result.attendanceType;
+    const examStatus = result.response?.status || result.status;
+    
+    if (messageConfig.success && attendanceType) {
+        const attendanceStatus = attendanceType === 'Late' 
             ? '⏰ Status: Arrived Late' 
             : '✓ Status: On Time';
         detailsText = detailsText ? `${detailsText}\n${attendanceStatus}` : attendanceStatus;
     }
     
+    if (messageConfig.success && examStatus && apiMessage === 'ExamAttendanceRecorded') {
+        const statusText = `📝 Exam Status: ${examStatus}`;
+        detailsText = detailsText ? `${detailsText}\n${statusText}` : statusText;
+    }
+    
+    // Build HTTP log details
+    let httpLog = '';
+    if (result) {
+        // Request details
+        const requestPayload = result.entry || result.leave;
+        if (requestPayload) {
+            httpLog += '📤 REQUEST:\n';
+            httpLog += `Endpoint: ${isEnter ? '/api/Keys/enter' : '/api/Keys/exit'}\n`;
+            httpLog += `Method: POST\n`;
+            httpLog += `Payload: ${JSON.stringify(requestPayload, null, 2)}\n\n`;
+        }
+        
+        // Response details
+        if (result.code !== undefined) {
+            httpLog += '📥 RESPONSE:\n';
+            httpLog += `Status Code: ${result.code}\n`;
+            
+            if (result.response) {
+                if (typeof result.response === 'object') {
+                    httpLog += `Body:\n${JSON.stringify(result.response, null, 2)}`;
+                } else {
+                    httpLog += `Body: ${result.response}`;
+                }
+            }
+        }
+    }
+    
+    // Combine details text with HTTP log
+    const finalDetails = detailsText 
+        ? `${detailsText}\n\n${'─'.repeat(40)}\n\n${httpLog}` 
+        : httpLog;
+    
     showResult(
         messageConfig.success, 
         messageConfig.title, 
         messageConfig.message,
-        detailsText || null
+        finalDetails || null
     );
 }
 
 // Show result
 function showResult(success, title, message, details) {
+    console.log('showResult called:', { success, title, message, details });
     elements.resultIcon.className = success ? 'result-icon success' : 'result-icon error';
     elements.resultTitle.textContent = title;
     elements.resultMessage.textContent = message;
     
     if (details) {
+        console.log('Setting details:', details);
         // If details is a string, show it as text; otherwise show as JSON
         if (typeof details === 'string') {
-            elements.resultDetails.innerHTML = `<div style="white-space: pre-line; padding: 10px; background: rgba(139, 92, 246, 0.1); border-radius: 8px; margin-top: 10px;">${details}</div>`;
+            elements.resultDetails.innerHTML = `<div style="white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 0.85rem; line-height: 1.5; color: #333;">${details}</div>`;
         } else {
             elements.resultDetails.innerHTML = `<pre>${JSON.stringify(details, null, 2)}</pre>`;
         }
+        console.log('resultDetails innerHTML:', elements.resultDetails.innerHTML);
     } else {
+        console.log('No details to show');
         elements.resultDetails.innerHTML = '';
     }
     
