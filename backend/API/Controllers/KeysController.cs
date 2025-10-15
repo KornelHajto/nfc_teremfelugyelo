@@ -46,6 +46,13 @@ namespace API.Controllers
             if (user == null) { return Unauthorized(new { message = "KeycardNotFound" }); }
             Classroom? room = await _context.Classrooms.FirstOrDefaultAsync(c => c.RoomId == Keycard.RoomId);
             if (room == null) { return NotFound(new { message = "RoomNotFound" }); }
+            bool isInClass = _context.Classrooms
+                .Any(c => c.InRoom.Any(u => u.NeptunId == user.NeptunId));
+            if (isInClass)
+            {
+                return BadRequest(new { message = "UserAlreadyInRoom" });
+            }
+           
 
             var now = DateTime.Now;
 
@@ -60,6 +67,22 @@ namespace API.Controllers
 
             if (exam != null)
             {
+                ExamAttendance? examA = await _context.ExamAttendances
+                    .FirstOrDefaultAsync(ea => ea.User.NeptunId == user.NeptunId && ea.Exam.Id == exam.Id);
+
+                if (examA != null)
+                {
+                    switch (examA.Status)
+                    {
+                        case ExamStatusTypes.Approved:
+                            return Ok(new { message = "Authorized" });
+                        case ExamStatusTypes.Denied:
+                            return Unauthorized(new { message = "DeniedByTeacher" });
+                        default:
+                            return Unauthorized(new { message = "WaitForResponse" });
+                    }
+                }
+
                 // Check if user is enrolled in the course
                 bool isEnrolled = user.Courses.Any(c => c.Id == exam.Course.Id);
                 if (!isEnrolled)
@@ -71,7 +94,7 @@ namespace API.Controllers
                 var examEnterDeadline = exam.Date + exam.EnterSpan;
                 
                 Console.WriteLine(now.ToLocalTime() +" > "+examEnterDeadline.ToLocalTime());
-                var examStatus = now < examEnterDeadline ? ExamStatusTypes.Waiting : ExamStatusTypes.Approved;
+                var examStatus = now <= examEnterDeadline ? ExamStatusTypes.Approved : ExamStatusTypes.Waiting; ;
 
                 // Add ExamAttendance
                 ExamAttendance examAttendance = new()

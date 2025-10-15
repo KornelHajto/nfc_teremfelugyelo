@@ -95,5 +95,25 @@ namespace API.Controllers
 
             return Ok(new { message = "Authorized", exams = examsList });
         }
+
+        [Authorize]
+        [HttpGet("getall")]
+        public async Task<IActionResult> GetAllExams()
+        {
+            var neptunId = User.FindFirst(ClaimTypes.Name)?.Value;
+            if (string.IsNullOrEmpty(neptunId))
+                return BadRequest(new { message = "NoId" });
+
+            User? user = await _context.Users
+                .FirstOrDefaultAsync(u => u.NeptunId == neptunId);
+            if (user == null)
+                return Unauthorized(new { message = "NoUserFound" });
+            if (user.AdminLevel == AdminLevels.Student)
+                return Unauthorized(new { message = "NotAuthorized" });
+
+            var examList = await _context.Exams.ToListAsync();
+
+            return Ok(new { message = "Authorized", attendances = examList });
+        }
     }
 }

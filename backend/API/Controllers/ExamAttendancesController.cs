@@ -67,5 +67,28 @@ namespace API.Controllers
                 attendances = examAttendances
             });
         }
+
+        [Authorize]
+        [HttpGet("getall")]
+        public async Task<IActionResult> GetAllExamAttendances()
+        {
+            var neptunId = User.FindFirst(ClaimTypes.Name)?.Value;
+            if (string.IsNullOrEmpty(neptunId))
+                return BadRequest(new { message = "NoId" });
+
+            User? user = await _context.Users
+                .FirstOrDefaultAsync(u => u.NeptunId == neptunId);
+            if (user == null)
+                return Unauthorized(new { message = "NoUserFound" });
+            if (user.AdminLevel == AdminLevels.Student)
+                return Unauthorized(new { message = "NotAuthorized" });
+
+            var eAttendances = await _context.ExamAttendances
+                .Include(e => e.User)
+                .Include(e => e.Exam)
+                .ToListAsync();
+
+            return Ok(new { message = "Authorized", attendances = eAttendances });
+        }
     }
 }
