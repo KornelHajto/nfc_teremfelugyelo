@@ -111,7 +111,10 @@ namespace API.Controllers
             if (user.AdminLevel == AdminLevels.Student)
                 return Unauthorized(new { message = "NotAuthorized" });
 
-            var examList = await _context.Exams.ToListAsync();
+            var examList = await _context.Exams
+                .Include(e => e.Course)
+                .Include(e => e.Classroom)
+                .ToListAsync();
 
             return Ok(new { message = "Authorized", attendances = examList });
         }
