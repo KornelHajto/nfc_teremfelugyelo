@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    >
 
     <ImageView
         android:id="@+id/imageView"
@@ -64,35 +65,81 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <EditText
-        android:id="@+id/etPassword"
+    <LinearLayout
+        android:id="@+id/psw"
         android:layout_width="300dp"
         android:layout_height="50dp"
         android:layout_marginTop="16dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
         android:background="@drawable/rounded_edittext_bg"
-        android:hint="Jelszó"
-        android:paddingHorizontal="16dp"
-        android:inputType="textPassword"
-        android:textColor="#3e07ab"
-        android:textColorHint="#a895cf"
+        android:paddingStart="16dp"
+        android:paddingEnd="8dp"
         app:layout_constraintTop_toBottomOf="@id/etUsername"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent">
 
-    <EditText
-        android:id="@+id/etPasswordAgain"
+        <EditText
+            android:id="@+id/etPassword"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:hint="Jelszó"
+            android:inputType="textPassword"
+            android:textColor="#3e07ab"
+            android:textColorHint="#a895cf"
+            android:background="@android:color/transparent"
+            android:paddingVertical="0dp" />
+
+        <ImageButton
+            android:id="@+id/btnTogglePassword"
+            android:layout_width="30dp"
+            android:layout_height="match_parent"
+            android:background="@android:color/transparent"
+            android:src="@drawable/visibility_icon"
+            android:contentDescription="Toggle Password Visibility"
+            android:scaleType="centerInside"
+            app:tint="#3e07ab"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/psw2"
         android:layout_width="300dp"
         android:layout_height="50dp"
         android:layout_marginTop="16dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
         android:background="@drawable/rounded_edittext_bg"
-        android:hint="Jelszó megismétlése"
-        android:paddingHorizontal="16dp"
-        android:inputType="textPassword"
-        android:textColor="#3e07ab"
-        android:textColorHint="#a895cf"
-        app:layout_constraintTop_toBottomOf="@id/etPassword"
+        android:paddingStart="16dp"
+        android:paddingEnd="8dp"
+        app:layout_constraintTop_toBottomOf="@id/psw"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <EditText
+            android:id="@+id/etPasswordAgain"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/rounded_edittext_bg"
+            android:hint="Jelszó megismétlése"
+            android:inputType="textPassword"
+            android:textColor="#3e07ab"
+            android:textColorHint="#a895cf"
+            app:layout_constraintTop_toBottomOf="@id/psw"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <ImageButton
+            android:id="@+id/btnTogglePasswordAgain"
+            android:layout_width="30dp"
+            android:layout_height="match_parent"
+            android:background="@android:color/transparent"
+            android:src="@drawable/visibility_icon"
+            android:contentDescription="Toggle Password Visibility"
+            android:scaleType="centerInside"
+            app:tint="#3e07ab"/>
+    </LinearLayout>
 
     <Button
         android:id="@+id/btnRegister"
@@ -110,7 +157,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.504"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/etPasswordAgain"
+        app:layout_constraintTop_toBottomOf="@id/psw2"
         app:layout_constraintVertical_bias="0.0" />
 
     <TextView
@@ -135,6 +182,7 @@
         android:textColor="#3e07ab"
         android:textSize="14sp"
         android:textStyle="bold"
+        android:clickable="true"
         app:layout_constraintBaseline_toBaselineOf="@id/tvLogin"
         app:layout_constraintStart_toEndOf="@id/tvLogin" />
 
