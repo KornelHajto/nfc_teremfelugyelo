@@ -40,6 +40,8 @@ namespace API.Controllers
                 .Include(u => u.Keys)
                 .Include(u => u.Courses)
                 .ThenInclude(c => c.Classroom)
+                .Include(u => u.Courses)
+                .ThenInclude(c => c.Subject)
                 .FirstOrDefaultAsync(u => u.Keys.Any(k => k.Hash == Keycard.Hash));
             if (user == null) { return Unauthorized(new { message = "KeycardNotFound" }); }
             Classroom? room = await _context.Classrooms.FirstOrDefaultAsync(c => c.RoomId == Keycard.RoomId);
@@ -87,7 +89,7 @@ namespace API.Controllers
 
             // If no exam is in progress, check for a course
             var userCourse = user.Courses
-                .FirstOrDefault(c => c.Classroom.RoomId == Keycard.RoomId && c.Date.Any(d => d.Date == now.Date));
+                .FirstOrDefault(c => c.Classroom.RoomId == Keycard.RoomId && c.Date.Any(d => d.Date.Date == now.Date));
             if (userCourse == null)
             {
                 return Unauthorized(new { message = "NoCourseInRoomToday" });
@@ -109,6 +111,11 @@ namespace API.Controllers
             var attendanceType = isLate ? AttendanceTypes.Late : AttendanceTypes.Arrived;
 
             room.InRoom.Add(user);
+
+            if (userCourse.Subject == null)
+            {
+                return BadRequest(new { message = "CourseSubjectMissing" });
+            }
 
             Attendance attendance = new()
             {

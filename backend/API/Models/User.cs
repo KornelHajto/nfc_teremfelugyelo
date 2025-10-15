@@ -21,7 +21,7 @@ namespace API.Models
         [Required]
         public AdminLevels AdminLevel { get; set; } = 0;
         [Required]
-        public required byte[] Picture { get; set; }
+        public required string Picture { get; set; }
 
 
         public List<RememberMe> RememberMe { get; set; } = new List<RememberMe>();
