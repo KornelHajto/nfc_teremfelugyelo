@@ -94,7 +94,7 @@ namespace API.Controllers
             //user.RememberMe.Add(new RememberMe() { RememberHash = WroteToken});
             //await _context.SaveChangesAsync();
             Response.Headers.Append("Authorization", $"Bearer {WroteToken}");
-            return Ok(new {message = "LoginSuccesful", token = WroteToken });
+            return Ok(new {message = "LoginSuccesful", token = WroteToken, name = user.FullName });
         }
 
         [Authorize]

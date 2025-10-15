@@ -61,5 +61,39 @@ namespace API.Controllers
 
             return Ok(new { message = "ExamCreated" });
         }
+
+        [Authorize]
+        [HttpGet("user/getall")]
+        public async Task<IActionResult> UserGetAllExams()
+        {
+            var neptunId = User.FindFirst(ClaimTypes.Name)?.Value;
+            if (string.IsNullOrEmpty(neptunId))
+                return BadRequest(new { message = "NoId" });
+
+            User? user = await _context.Users
+                .Include(u => u.Courses)
+                .FirstOrDefaultAsync(u => u.NeptunId == neptunId);
+            if (user == null)
+                return Unauthorized(new { message = "NoUserFound" });
+
+            // Get all exams for the user's courses
+            var userCourseIds = user.Courses.Select(c => c.Id).ToList();
+            var examsList = await _context.Exams
+                .Include(e => e.Course)
+                .Include(e => e.Classroom)
+                .Where(e => userCourseIds.Contains(e.Course.Id))
+                .Select(e => new
+                {
+                    e.Id,
+                    e.Date,
+                    e.Duration,
+                    Course = new { e.Course.Id, e.Course.Name },
+                    Classroom = new { e.Classroom.RoomId }
+                })
+                .ToListAsync();
+            Console.WriteLine(userCourseIds);
+
+            return Ok(new { message = "Authorized", exams = examsList });
+        }
     }
 }

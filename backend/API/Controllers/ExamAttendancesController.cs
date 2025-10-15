@@ -40,5 +40,32 @@ namespace API.Controllers
             await _context.SaveChangesAsync();
             return Ok(new { message = "ExamAttendanceUpdated" });
         }
+
+        [Authorize]
+        [HttpGet("user/getall")]
+        public async Task<IActionResult> GetAllUser()
+        {
+            var neptunId = User.FindFirst(ClaimTypes.Name)?.Value;
+            if (string.IsNullOrEmpty(neptunId))
+                return BadRequest(new { message = "NoId" });
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.NeptunId == neptunId);
+            if (user == null)
+                return Unauthorized(new { message = "NoUserFound" });
+
+            var examAttendances = await _context.ExamAttendances
+                .Include(ea => ea.Exam)
+                    .ThenInclude(e => e.Classroom)
+                .Include(ea => ea.Exam)
+                    .ThenInclude(e => e.Course)
+                .Where(ea => ea.User.NeptunId == neptunId)
+                .ToListAsync();
+
+            return Ok(new
+            {
+                message = "Authorized",
+                attendances = examAttendances
+            });
+        }
     }
 }

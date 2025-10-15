@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 public enum AdminLevels
 {
@@ -16,12 +17,12 @@ namespace API.Models
         public required string NeptunId { get; set; }
         [Required] 
         public required string FullName { get; set; }
-        [Required]
-        public required string Password { get; set; }
+        [JsonIgnore]
+        public string Password { get; set; } = "";
         [Required]
         public AdminLevels AdminLevel { get; set; } = 0;
-        [Required]
-        public required string Picture { get; set; }
+        [JsonIgnore]
+        public string? Picture { get; set; }
 
 
         public List<RememberMe> RememberMe { get; set; } = new List<RememberMe>();
