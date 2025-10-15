@@ -3,3 +3,4 @@ backend/API/bin/
 backend/API/obj/
 backend/API/appsettings.Development.json
 hardware/static/images/captures
+web/node_modules
