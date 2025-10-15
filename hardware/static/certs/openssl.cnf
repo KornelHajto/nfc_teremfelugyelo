@@ -1,0 +1,13 @@
+[req]
+distinguished_name = req_distinguished_name
+x509_extensions = v3_req
+prompt = no
+
+[req_distinguished_name]
+CN = 192.168.181.121
+
+[v3_req]
+subjectAltName = @alt_names
+
+[alt_names]
+IP.1 = 192.168.181.121
