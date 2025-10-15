@@ -2,4 +2,4 @@ backend/API/.vs/
 backend/API/bin/
 backend/API/obj/
 backend/API/appsettings.Development.json
-hardware/static/images
+hardware/static/images/captures
