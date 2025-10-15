@@ -57,7 +57,10 @@ namespace API.Controllers
                 return Unauthorized(new { message = "NoUserFound" });
             if (user.AdminLevel == AdminLevels.Student)
                 return Unauthorized(new { message = "NotAuthorized" });
-            List<Attendance> attendances = await _context.Attendances.ToListAsync();
+            List<Attendance> attendances = await _context.Attendances
+                .Include(a => a.User)
+                .Include(a => a.Subject)
+                .ToListAsync();
 
             return Ok(new { message = "Authorized", attendances = attendances });
 

@@ -7,15 +7,13 @@ namespace API.Models
     {
         public int Id { get; set; }
         [Required]
-        public required Subject Subject { get; set; }
-        [Required]
         public required Course Course { get; set; }
         [Required]
         public required Classroom Classroom { get; set; }
         [Required]
         public required DateTime Date { get; set; }
         [Required]
-        public required int Duration { get; set; }
+        public required TimeSpan Duration { get; set; }
         [Required]
         public required TimeSpan EnterSpan { get; set; }
         [Required]

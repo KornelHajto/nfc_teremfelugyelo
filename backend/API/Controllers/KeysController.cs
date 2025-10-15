@@ -46,6 +46,46 @@ namespace API.Controllers
             if (room == null) { return NotFound(new { message = "RoomNotFound" }); }
 
             var now = DateTime.Now;
+
+            // Check for an exam in progress in the room
+            var exam = await _context.Exams
+                .Include(e => e.Course)
+                .Include(e => e.Classroom)
+                .FirstOrDefaultAsync(e =>
+                    e.Classroom.RoomId == Keycard.RoomId &&
+                    e.Date.Date == now.Date.Date &&
+                    now <= e.Date + e.Duration);
+
+            if (exam != null)
+            {
+                // Check if user is enrolled in the course
+                bool isEnrolled = user.Courses.Any(c => c.Id == exam.Course.Id);
+                if (!isEnrolled)
+                {
+                    return Unauthorized(new { message = "NotEnrolledInExamCourse" });
+                }
+
+                // Determine if user is late
+                var examEnterDeadline = exam.Date + exam.EnterSpan;
+                
+                Console.WriteLine(now.ToLocalTime() +" > "+examEnterDeadline.ToLocalTime());
+                var examStatus = now < examEnterDeadline ? ExamStatusTypes.Waiting : ExamStatusTypes.Approved;
+
+                // Add ExamAttendance
+                ExamAttendance examAttendance = new()
+                {
+                    User = user,
+                    Exam = exam,
+                    Arrival = now,
+                    Status = examStatus
+                };
+                await _context.ExamAttendances.AddAsync(examAttendance);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "ExamAttendanceRecorded", status = examStatus.ToString() });
+            }
+
+            // If no exam is in progress, check for a course
             var userCourse = user.Courses
                 .FirstOrDefault(c => c.Classroom.RoomId == Keycard.RoomId && c.Date.Any(d => d.Date == now.Date));
             if (userCourse == null)

@@ -28,11 +28,12 @@ namespace API.Services
                     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                     var now = DateTime.Now;
 
-                    var todayCourses = await db.Courses
+                    var todayCourses = (await db.Courses
                         .Include(c => c.Students)
                         .Include(c => c.Subject)
+                        .ToListAsync(stoppingToken))
                         .Where(c => c.Date.Any(d => d.Date == now.Date))
-                        .ToListAsync(stoppingToken);
+                        .ToList();
 
                     foreach (var course in todayCourses)
                     {

@@ -7,6 +7,7 @@ namespace API.Data
     {
         public DbSet<User> Users { get; set; }
         public DbSet<Attendance> Attendances { get; set; }
+        public DbSet<ExamAttendance> ExamAttendances { get; set; }
         public DbSet<Classroom> Classrooms { get; set; }
         public DbSet<Course> Courses { get; set; }
         public DbSet<Exam> Exams { get; set; }
