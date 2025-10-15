@@ -93,6 +93,7 @@ function handleJSONMessage(message) {
     
     switch (event) {
         case 'card_read':
+            // Only used for ENTER mode (leave/exit sends result immediately without camera)
             AppState.pendingCard = message.card;
             // Reference image is stored on server, just check if it exists
             const hasReference = message.card.hasReferenceImage;
@@ -413,13 +414,17 @@ function handleApiResponse(isEnter, result, isError = false) {
     const successMessages = {
         'Authorized': {
             title: `${mode} Authorized ✓`,
-            message: `Welcome! Your ${mode.toLowerCase()} has been recorded.`,
+            message: isEnter 
+                ? `Welcome! Your entry has been recorded.` 
+                : `Goodbye! Your exit has been recorded.`,
             icon: '✓',
             success: true
         },
         'AuthorizedAsAdmin': {
             title: `${mode} Authorized (Admin) ✓`,
-            message: `Admin access granted. Your ${mode.toLowerCase()} has been recorded.`,
+            message: isEnter
+                ? `Admin access granted. Your entry has been recorded.`
+                : `Admin exit recorded. Goodbye!`,
             icon: '✓',
             success: true
         },
@@ -431,6 +436,12 @@ function handleApiResponse(isEnter, result, isError = false) {
             icon: '✓',
             success: true,
             details: result.status ? `Status: ${result.status}` : null
+        },
+        'ExitRecorded': {
+            title: 'Exit Recorded ✓',
+            message: 'Your departure has been successfully recorded. Goodbye!',
+            icon: '✓',
+            success: true
         }
     };
     

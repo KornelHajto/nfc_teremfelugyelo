@@ -142,7 +142,7 @@ last_entries = {}
 
 # Default endpoints (change these to your real endpoints)
 ENTER_URL = 'http://192.168.153.78:5189/api/Keys/enter'
-LEAVE_URL = 'http://192.168.153.78:5189/api/leave'
+LEAVE_URL = 'http://192.168.153.78:5189/api/Keys/exit'
 
 
 def send_post(url, payload):

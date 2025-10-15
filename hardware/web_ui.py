@@ -100,8 +100,8 @@ async def websocket_handler(request):
                     room = cmd[1]
                 if room is None:
                     room = conn_room
-                # detect card first for leave, then ask client to provide picture for verification (or confirm)
-                await ws.send_str('Waiting for card in leave mode...')
+                # For leave/exit: just detect card and send exit request immediately (no face recognition)
+                await ws.send_str('Waiting for card to exit...')
                 cancel_ev = app['cancel_events'].get(ws)
                 def do_detect_leave():
                     pn_i2c, pn_uart = api.init_readers_for(room)
@@ -112,37 +112,35 @@ async def websocket_handler(request):
                 elif sensor == 'CANCELLED':
                     await ws.send_str(json.dumps({'event': 'leave_cancelled'}))
                 else:
-                    # Fetch reference image from API
-                    import requests
-                    reference_image = None
+                    # Send exit request immediately (no camera/face recognition needed for exit)
+                    sensor_name = 'PC1' if sensor == 'I2C' else 'PC2' if sensor == 'UART' else sensor
+                    room_name = room or sensor_name.lower()
+                    
+                    # Prepare payload: just hash (no roomId needed for exit)
+                    leave_payload = {
+                        'hash': data
+                    }
+                    
+                    print(f'[DEBUG] Sending exit request for hash: {data[:20]}...')
+                    
+                    # Send exit request to API
+                    resp = api.send_post(api.LEAVE_URL, leave_payload)
                     try:
-                        # Get room_id for API call
-                        sensor_name = 'PC1' if sensor == 'I2C' else 'PC2' if sensor == 'UART' else sensor
-                        room_id = 'PC0' if sensor_name == 'PC1' or room == 'pc0' else 'PC1'
-                        
-                        # Call /api/Keys/image with hash and roomId
-                        image_url = 'http://192.168.153.78:5189/api/Keys/image'
-                        payload = {'hash': data, 'roomId': room_id}
-                        resp = requests.post(image_url, json=payload, timeout=10)
-                        if resp.status_code == 200:
-                            # Response is JSON: {"message": "Authorized", "image": "base64..."}
-                            resp_data = resp.json()
-                            reference_image = resp_data.get('image')
-                            print(f'Reference image fetched (leave): {reference_image[:50] if reference_image else None}...')
-                    except Exception as e:
-                        print(f'Failed to fetch reference image: {e}')
-                        reference_image = None
+                        content = resp.json() if resp is not None else None
+                    except Exception:
+                        content = resp.text if resp is not None else None
                     
-                    # Store the full reference_image on server, only send a flag to frontend
-                    pending = {'sensor': sensor, 'uid': uid, 'data': data, 'room': room, 'referenceImage': reference_image}
-                    print(f'[DEBUG] Storing referenceImage on server (leave): {reference_image is not None}')
-                    if reference_image:
-                        print(f'[DEBUG] referenceImage length: {len(reference_image)}')
-                    app.setdefault('pending_cards', {})[ws] = pending
-                    
-                    # Send to frontend WITHOUT the huge base64 string
-                    card_info = {'sensor': sensor, 'uid': uid, 'data': data, 'room': room, 'hasReferenceImage': reference_image is not None}
-                    await ws.send_str(json.dumps({'event': 'card_read', 'card': card_info}))
+                    # Send result to frontend immediately
+                    result_payload = {
+                        'event': 'leave_done' if resp is not None and 200 <= resp.status_code < 300 else 'leave_error',
+                        'result': {
+                            'leave': leave_payload,
+                            'code': resp.status_code if resp is not None else None,
+                            'response': content,
+                            'message': content.get('message') if isinstance(content, dict) else str(content)
+                        }
+                    }
+                    await ws.send_str(json.dumps(result_payload))
 
             elif cmd[0] == 'get_last':
                 # return the last entry only for this websocket's room
@@ -174,29 +172,7 @@ async def websocket_handler(request):
                         content = resp.text if resp is not None else None
                     payload = {'event': 'enter_done' if resp is not None and 200 <= resp.status_code < 300 else 'enter_error', 'result': {'entry': enter_payload, 'code': resp.status_code if resp is not None else None, 'response': content}, 'last_entry': last_entry}
                     await ws.send_str(json.dumps(payload))
-            elif cmd[0] == 'leave_confirm':
-                pending = app.get('pending_cards', {}).pop(ws, None)
-                if not pending:
-                    await ws.send_str(json.dumps({'event': 'error', 'message': 'no_pending_card'}))
-                else:
-                    sensor_name = 'PC1' if pending.get('sensor') == 'I2C' else 'PC2' if pending.get('sensor') == 'UART' else pending.get('sensor')
-                    room_name = pending.get('room') or sensor_name.lower()
-                    # Format: PC0 or PC1
-                    room_id = 'PC0' if sensor_name == 'PC1' or room_name == 'pc0' else 'PC1'
-                    leave_payload = {
-                        'hash': pending.get('data'),
-                        'roomId': room_id
-                    }
-                    # Keep leave_card for backwards compatibility
-                    leave_card = {'Room': sensor_name, 'Key': pending.get('data'), 'uid': pending.get('uid'), 'room': room_name, 'roomId': room_id}
-                    api.last_entries[room_name] = leave_card
-                    resp = api.send_post(api.LEAVE_URL, leave_payload)
-                    try:
-                        content = resp.json() if resp is not None else None
-                    except Exception:
-                        content = resp.text if resp is not None else None
-                    payload = {'event': 'leave_done' if resp is not None and 200 <= resp.status_code < 300 else 'leave_error', 'result': {'leave': leave_payload, 'code': resp.status_code if resp is not None else None, 'response': content}, 'last_entry': leave_card}
-                    await ws.send_str(json.dumps(payload))
+
             elif cmd[0] == 'cancel':
                 # set the cancel event for this websocket so any running detect loop can stop
                 ev = app['cancel_events'].get(ws)
