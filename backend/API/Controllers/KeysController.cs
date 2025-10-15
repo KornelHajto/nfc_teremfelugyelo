@@ -246,5 +246,31 @@ namespace API.Controllers
 
             return Ok(new { message = "KeyDeleted" });
         }
+
+        [HttpGet("tempkey")]
+        public async Task<IActionResult> CreateTempKey()
+        {
+            if (!ModelState.IsValid) { return BadRequest(new { message = "InvalidForm" }); }
+            var neptunId = User.FindFirst(ClaimTypes.Name)?.Value;
+            if (string.IsNullOrEmpty(neptunId))
+                return BadRequest(new { message = "NoId" });
+
+            var userC = await _context.Users.FirstOrDefaultAsync(u => u.NeptunId == neptunId);
+            if (userC == null)
+                return Unauthorized(new { message = "NoUserFound" });
+
+            string tempHash = Guid.NewGuid().ToString("N").Substring(0, 16);
+
+            var tempKey = new Key
+            {
+                Hash = tempHash,
+                Expiration = DateTime.UtcNow.AddMinutes(1)
+            };
+
+            userC.Keys.Add(tempKey);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { key = tempHash, expiresAt = tempKey.Expiration });
+        }
     }
 }

@@ -85,6 +85,7 @@ namespace API
                 });
             });
             builder.Services.AddHostedService<AttendanceService>();
+            builder.Services.AddHostedService<KeyExpirationService>();
             var app = builder.Build();
             app.UseCors("AllowAll");
 
