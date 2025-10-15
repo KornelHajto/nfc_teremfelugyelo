@@ -124,7 +124,7 @@ public class RegisterActivity extends AppCompatActivity {
                 startRegisterProcess(new RegisterCallback() {
                     @Override
                     public void onPictureTaken() {
-                        goHome(); // continue to home when done
+                        registerUser();
                     }
 
                     @Override
@@ -214,6 +214,31 @@ public class RegisterActivity extends AppCompatActivity {
                 base64String = Base64.encodeToString(byteArray, Base64.DEFAULT);
             }
         }
+    }
+
+    private void registerUser(){
+        ApiHandler api = new ApiHandler();
+        DatabaseServiceManager db = new DatabaseServiceManager(getApplicationContext());
+
+        String neptuncode = etNeptun.getText().toString();
+        String password = etPassword.getText().toString();
+        String passwordAgain = etPasswordAgain.getText().toString();
+        String name = etUsername.getText().toString();
+
+        new Thread(() -> {
+            api.Register(name, neptuncode, password, base64String, db);
+            //Log.e("Login", "Login success: " + u.getToken());
+        }).start();
+
+        new Thread(() -> {
+            api.Login(name, neptuncode, db);
+            //Log.e("Login", "Login success: " + u.getToken());
+        }).start();
+
+//        while(db.getUser(neptuncode) == null){
+//
+//        }
+        goHome();
     }
 
     private void goHome(){

@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">NFC_student_interface</string>
+    <string name="nfc_service">nfc_service</string>
+    <string name="aid_group">aid_group</string>
+    <string name="service_description">desc</string>
 </resources>

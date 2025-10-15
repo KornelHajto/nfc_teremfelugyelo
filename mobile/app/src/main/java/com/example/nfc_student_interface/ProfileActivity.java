@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -12,6 +13,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+
+import com.example.nfc_student_interface.DAO.User;
 
 public class ProfileActivity extends AppCompatActivity {
 
@@ -27,6 +30,13 @@ public class ProfileActivity extends AppCompatActivity {
         });
 
         initializeNavBar();
+
+        DatabaseServiceManager db = new DatabaseServiceManager(getApplicationContext());
+        TextView tvProfileName = findViewById(R.id.tvProfileName);
+        TextView tvNeptunCode = findViewById(R.id.tvNeptunCode);
+
+
+
     }
 
     private void initializeNavBar(){
@@ -88,6 +98,11 @@ public class ProfileActivity extends AppCompatActivity {
         btnLogout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                DatabaseServiceManager db = new DatabaseServiceManager(getApplicationContext());
+                User u = db.getActive();
+                u.setToken(null);
+                db.updateUser(u);
+
                 Intent intent = new Intent(ProfileActivity.this, LoginActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
                 startActivity(intent);

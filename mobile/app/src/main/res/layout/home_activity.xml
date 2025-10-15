@@ -3,10 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/main"
     android:layout_width="match_parent"
-    android:layout_margin="8dp"
     android:layout_height="match_parent"
     app:cardCornerRadius="12dp"
-    app:cardElevation="4dp"
     app:cardUseCompatPadding="true"
     android:background="@android:color/white">
 
@@ -257,7 +255,6 @@
 
             <!-- Multiple class cards -->
             <include layout="@layout/card_simple_layout"/>
-            <include layout="@layout/card_simple_layout"/>
 
             <!-- Upcoming Exams Section -->
             <LinearLayout
@@ -284,7 +281,6 @@
             </LinearLayout>
 
             <!-- Exam cards -->
-            <include layout="@layout/card_exam_layout"/>
             <include layout="@layout/card_exam_layout"/>
 
         </LinearLayout>

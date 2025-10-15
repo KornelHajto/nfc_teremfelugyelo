@@ -214,7 +214,7 @@
                     android:id="@+id/tvProfileName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Tanuló neve"
+                    android:text="Bojsza Réka"
                     android:textColor="#4A148C"
                     android:textSize="24sp"
                     android:textStyle="bold" /> <!-- Deep purple -->
@@ -247,7 +247,7 @@
                     android:id="@+id/tvNeptunCode"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="NK2D5G7"
+                    android:text="W1S6I9"
                     android:textColor="#6A1B9A"
                     android:textSize="14sp"
                     android:textStyle="bold" />

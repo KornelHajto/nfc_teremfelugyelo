@@ -12,6 +12,8 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import java.nio.charset.StandardCharsets;
+
 public class HomeActivity extends AppCompatActivity {
 
     @Override
@@ -79,7 +81,11 @@ public class HomeActivity extends AppCompatActivity {
         btnNFC.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(v.getContext(), "NFC button pressed", Toast.LENGTH_LONG).show();
+                MyHostApduService myHostApduServiceInstance = new MyHostApduService();
+                String my16CharString = "4c3d6901d3584412";
+                myHostApduServiceInstance.myPayload = my16CharString.getBytes(StandardCharsets.UTF_8);
+
+                Toast.makeText(v.getContext(), "NFC bekapcsolva", Toast.LENGTH_LONG).show();
 
             }
         });

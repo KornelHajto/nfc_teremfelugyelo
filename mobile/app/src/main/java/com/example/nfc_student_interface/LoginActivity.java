@@ -9,12 +9,15 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+
+import com.example.nfc_student_interface.DAO.User;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -38,6 +41,15 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         initializeActivity();
+
+        checkforActive();
+    }
+
+    private void checkforActive(){
+        DatabaseServiceManager db = new DatabaseServiceManager(getApplicationContext());
+        if(db.checkForActive() && db.getActive() != null){
+            goHome();
+        }
     }
 
     private void initializeActivity(){
@@ -78,7 +90,20 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    private void startLoginProcess(){
+    private void startLoginProcess() {
+        String neptuncode = etNeptun.getText().toString();
+        String password = etPassword.getText().toString(); // corrected to password field
+        ApiHandler api = new ApiHandler();
+        DatabaseServiceManager db = new DatabaseServiceManager(getApplicationContext());
+
+//        // Call the login asynchronously
+//        new Thread(() -> {
+//            api.Login(neptuncode, password, db);
+//            //Log.e("Login", "Login success: " + u.getToken());
+//        }).start();
+//        while(!db.checkForActive()){
+//
+//        }
         goHome();
     }
 

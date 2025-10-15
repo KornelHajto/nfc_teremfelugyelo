@@ -31,7 +31,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Analízis I. gyakorlat"
+                android:text="Programozás II. gyakorlat"
                 android:textColor="#000000"
                 android:textStyle="bold"
                 android:textSize="18sp" />
@@ -39,7 +39,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Oct 26, 2024 - 10:00"
+                android:text="Oct 27, 2024 - 12:00"
                 android:textColor="#64748B"
                 android:textSize="14sp"
                 android:layout_marginTop="2dp" />

@@ -199,8 +199,6 @@
 
             <include layout="@layout/absence_excused_layout" />
             <include layout="@layout/absence_unexcused_layout" />
-            <include layout="@layout/absence_excused_layout" />
-            <include layout="@layout/absence_unexcused_layout" />
         </LinearLayout>
 
     </ScrollView>

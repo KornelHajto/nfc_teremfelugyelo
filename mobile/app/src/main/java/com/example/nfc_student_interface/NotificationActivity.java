@@ -78,7 +78,7 @@ public class NotificationActivity extends AppCompatActivity {
         btnNFC.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(v.getContext(), "NFC button pressed", Toast.LENGTH_LONG).show();
+                Toast.makeText(v.getContext(), "NFC bekapcsolva", Toast.LENGTH_LONG).show();
 
             }
         });
